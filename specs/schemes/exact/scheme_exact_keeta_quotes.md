@@ -28,9 +28,6 @@ sequenceDiagram
     Client->>Server: GET /api <br>PaymentPayload
     Server->>Facilitator: POST /verify
     Facilitator->>Facilitator: Parse blocks,<br>verify signature,<br>verify requirements
-    Facilitator->>Blockchain: getBalance(payer, token)<br>getBalance(payer, feeToken)
-    Blockchain-->>Facilitator: balances
-    Facilitator->>Facilitator: Verify payer token balance
     Facilitator-->>Server: VerifyResponse
     Server->>Facilitator: POST /settle
     opt if extra.feeSponsored is true
@@ -51,14 +48,13 @@ sequenceDiagram
 5.  **Client** sends a new request to the **Resource Server** with the `PaymentPayload` containing the Base64-encoded signed blocks.
 6.  **Resource Server** receives the request and forwards the `PaymentPayload` and `PaymentRequirements` to a **Facilitator Server's** `/verify` endpoint.
 7.  **Facilitator** decodes and parses the signed blocks and verifies them according to the [verification rules](#verification).
-8. **Facilitator** looks up the payer's balance of the token to pay and ensures they have enough to complete the transaction. If `extra.feeSponsored` is `false`, it also ensures that the payer has enough balance to pay the network's fees.
-9. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
-10. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
-11. **Facilitator** verifies the block according to the [settlement rules](#settlement). 
-12. If `extra.feeSponsored` is `false`, the **Facilitator** creates and signs a `Fee` block.
-13. **Facilitator** requests votes for the payment and fee blocks from the network's representatives and publishes the combined vote staple to the Keeta network.
-14. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
-15. **Resource Server** grants the **Client** access to the resource in its response.
+8. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
+9. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
+10. **Facilitator** verifies the block according to the [settlement rules](#settlement). 
+11. If `extra.feeSponsored` is `false`, the **Facilitator** creates and signs a `Fee` block.
+12. **Facilitator** requests votes for the payment and fee blocks from the network's representatives and publishes the combined vote staple to the Keeta network.
+13. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
+14. **Resource Server** grants the **Client** access to the resource in its response.
 
 ### Fee Sponsorship
 
@@ -169,13 +165,11 @@ Steps to verify a payment for the `exact` scheme on Keeta:
         - The `amount` matches the `requirements.amount`
         - The `to` matches the `requirements.payTo`
         - The `external` matches the `extra.external` if set
-    4. Verify that the block's `account` has sufficient funds of the `token` to send the `requirements.amount`.
 4. If fee sponsorship is **not** supported:
     1. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.feeBlock` and:
         1. Verify that the signature is valid
         2. Verify that the `network` matches the agreed upon Keeta `network_id`
         3. Verify that the `purpose` is fee
-        4. Verify that the block's `account` has sufficient funds to complete the fee `SEND` operations in the block
     2. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.quotes` and verify:
         1. The number of vote quotes matches the number of operations in the `payload.feeBlock`.
         2. For each vote quote there is a matching `SEND` operation in the `payload.feeBlock` which fulfills the quote's `fee` requirement.

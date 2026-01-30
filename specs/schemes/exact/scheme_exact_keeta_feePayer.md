@@ -28,9 +28,6 @@ sequenceDiagram
     Client->>Server: GET /api <br>PaymentPayload
     Server->>Facilitator: POST /verify
     Facilitator->>Facilitator: Parse block,<br>verify signature,<br>verify requirements
-    Facilitator->>Blockchain: getBalance(payer, token)<br>getBalance(payer, feeToken)
-    Blockchain-->>Facilitator: balances
-    Facilitator->>Facilitator: Verify payer token balance
     opt Query network fees if unknown and extra.feeSponsored is false
         Facilitator->>Blockchain: getQuotes(block)
         Blockchain-->>Facilitator: Array<VoteQuote>
@@ -57,12 +54,11 @@ sequenceDiagram
 5.  **Client** sends a new request to the **Resource Server** with the `PaymentPayload` containing the Base64-encoded signed block.
 6.  **Resource Server** receives the request and forwards the `PaymentPayload` and `PaymentRequirements` to a **Facilitator's** `/verify` endpoint.
 7. **Facilitator** decodes and parses the signed block and verifies the block according to the [verification rules](#verification).
-8. **Facilitator** looks up the payer's balance of the token to pay and the fee token and ensures they have enough to complete the transaction.
-9. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
-10. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
-11. **Facilitator** verifies the block according to the [settlement rules](#settlement). It computes and signs a fee block as the `feePayer` to pay for the fees, requests votes for the blocks from the network's representatives and publishes the combined vote staple to the network.
-12. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
-13. **Resource Server** grants the **Client** access to the resource in its response.
+8. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
+9. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
+10. **Facilitator** verifies the block according to the [settlement rules](#settlement). It computes and signs a fee block as the `feePayer` to pay for the fees, requests votes for the blocks from the network's representatives and publishes the combined vote staple to the network.
+11. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
+12. **Resource Server** grants the **Client** access to the resource in its response.
 
 ### Fee Sponsorship
 
@@ -168,7 +164,6 @@ Steps to verify a payment for the `exact` scheme on Keeta:
         - The `token` matches one of the network's fee token
         - The sum of the `amount` by `token` matches at least the network's required fee amount of the `token` for submitting the block
         - The `to` matches the `extra.feePayer` and it's own address
-    5. Verify that the block's `account` has sufficient funds of the `token` to send the `requirements.amount` and, if `extra.feeSponsored` is `false`, sufficient funds of the fee token to send the fee amount.
 
 ## Settlement
 
