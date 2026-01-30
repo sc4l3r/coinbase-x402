@@ -152,18 +152,21 @@ Steps to verify a payment for the `exact` scheme on Keeta:
 
 1. Verify `x402Version` is `2`.
 2. Verify the network matches the agreed upon chain (CAIP-2 format: `keeta:<network_id>`).
-3. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
+3. Verify that the the `extra.feeSponsored` field matches the facilitator's configuration:
+    1. If `extra.feeSponsored` is `true` verify that the facilitator supports fee sponsoring.
+    2. If `extra.feeSponsored` is `false` verify that `extra.feePayer` is set and is one of the facilitators addresses.
+4. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
     1. Verify that the signature is valid
     2. Verify that the `network` matches the agreed upon Keeta `network_id`
-    3. Verify that the `operations` contain exactly one operation if `extra.feeSponsored` is `true` and exactly two operations if `extra.feeSponsored` is `false`.
-    3. Verify that the `operations` contain a `SEND` operation to pay the server for which:
+    3. Verify that the `operations` contain exactly one operation if `extra.feeSponsored` is `true` and more than one operation if `extra.feeSponsored` is `false`.
+    4. Verify that the first operation in `operations` is a `SEND` operation to pay the server for which:
         - The `token` matches the `requirements.asset`
         - The `amount` matches the `requirements.amount`
         - The `to` matches the `requirements.payTo`
         - The `external` matches the `extra.external` if set
-    4. If the `extra.feeSponsored` is `false`, verify that the `operations` contain a `SEND` operation to pay the network fees to the `extra.feePayer` for which:
-        - The `token` matches the network's fee token
-        - The `amount` matches at least the network's required fee amount for submitting the block
+    5. If the `extra.feeSponsored` is `false`, verify that the operations following the previous `SEND` operation are `SEND` operations to pay the network fees to the `extra.feePayer` for which:
+        - The `token` matches one of the network's fee token
+        - The sum of the `amount` by `token` matches at least the network's required fee amount of the `token` for submitting the block
         - The `to` matches the `extra.feePayer` and it's own address
     5. Verify that the block's `account` has sufficient funds of the `token` to send the `requirements.amount` and, if `extra.feeSponsored` is `false`, sufficient funds of the fee token to send the fee amount.
 
@@ -172,9 +175,9 @@ Steps to verify a payment for the `exact` scheme on Keeta:
 Settlement is performed through the facilitator:
 
 1. **Facilitator** receives the `block`.
-2. If the **Facilitator** doesn't support fee sponsorship, it ensures that the block contains a `SEND` operation which sends at least the network's required funds to it's own address.
-3. **Facilitator** computes and signs a fee block.
-4. **Facilitator** transmits the blocks to the network by requesting the votes from the representatives and publishing the combined vote staple to the network.
+2. If the **Facilitator** doesn't support fee sponsorship, it ensures that the block contains `SEND` operations which sends at least the network's required funds to it's own address by requesting vote quotes from the network.
+3. **Facilitator** computes and signs a fee block. If fee sponsorship is disabled, it should use the vote quotes obtained in the previous step to create the block to ensure it pays exactly the fees it received from the client.
+4. **Facilitator** transmits the blocks to the network by requesting the votes from the representatives and publishing the combined vote staple to the network. If fee sponsorship is disabled, it should send the vote quotes obtained in a previous step.
 5. **Facilitator** sends the `SettlementResponse` to the **Resource Server**
 
 ### `SettlementResponse`
