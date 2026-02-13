@@ -28,14 +28,9 @@ sequenceDiagram
     Client->>Server: GET /api <br>with PaymentPayload
     Server->>Facilitator: POST /verify
     Facilitator->>Facilitator: Parse block,<br>verify signature,<br>verify requirements
-    opt Query network fees if unknown and extra.feePayer is set
-        Facilitator->>Blockchain: getQuotes(block)
-        Blockchain-->>Facilitator: Array<VoteQuote>
-    end
-    Facilitator->>Facilitator: Verify fees sent to feePayer suffice
     Facilitator-->>Server: VerifyResponse
     Server->>Facilitator: POST /settle
-    opt Query network fees if unknown and extra.feePayer is set
+    opt Query network fees if extra.feePayer is set
         Facilitator->>Blockchain: getQuotes(block)
         Blockchain-->>Facilitator: Array<VoteQuote>
     end
@@ -48,7 +43,7 @@ sequenceDiagram
 ```
 
 1.  **Client** makes a request to a **Resource Server**.
-2.  **Resource Server** responds with a payment required signal containing `PaymentRequired`. If the facilitator supports fee sponsorship, the `extra.feePayer` unset. Otherwise, it's set to the account address of the entity that will pay the fee for the transaction, typically the facilitator.
+2.  **Resource Server** responds with a payment required signal containing `PaymentRequired`. If the facilitator does not support fee sponsorship, the `extra.feePayer` field is set to the account address of the entity that will pay the fee for the transaction, typically the facilitator. Otherwise `extra.feePayer` unset.
 3.  **Client** creates and signs a block with a `SEND` operation to transfer the specified amount of the token to the recipient. If the `extra.external` field is set, the client sets the `external` field to the specified value in the `SEND` operation. If `extra.feePayer` is set, the client also adds a `SEND` operation to transfer the network's fees to the specified address. The block is **not** published to the network. Optionally, if the client doesn't know the required fees for the transaction, it may request vote quotes from the network's representatives to calculate the expected amount of fees.
 4.  **Client** serializes the signed block into its ASN.1 DER representation and encodes it as a Base64 string.
 5.  **Client** sends a new request to the **Resource Server** with the `PaymentPayload` containing the Base64-encoded signed block.
@@ -158,8 +153,6 @@ Steps to verify a payment for the `exact` scheme on Keeta:
         - The `to` matches the `requirements.payTo`.
         - The `external` matches the `extra.external` if set.
     5. If the `extra.feePayer` is set, verify that the operations following the previous `SEND` operation are `SEND` operations to pay the network fees to the `extra.feePayer` for which:
-        - The `token` matches one of the network's fee token.
-        - The sum of the `amount` by `token` matches at least the network's required fee amount of the `token` for submitting the block.
         - The `to` matches the `extra.feePayer` and is one of the facilitator's own addresses.
 
 ## Settlement
@@ -167,8 +160,8 @@ Steps to verify a payment for the `exact` scheme on Keeta:
 Settlement is performed through the facilitator:
 
 1. **Facilitator** receives the `block`.
-2. If the **Facilitator** does not support fee sponsorship, it ensures that the block contains `SEND` operations which send at least the network's required funds to its own address by requesting vote quotes from the network if necessary.
-3. **Facilitator** computes and signs a fee block. If fee sponsorship is disabled, it should use the vote quotes obtained in the previous step to create the block to ensure it pays exactly the fees it received from the client.
+2. If the **Facilitator** does not support fee sponsorship, it ensures that the block contains `SEND` operations which send at least the network's required funds to its own address by requesting vote quotes from the network.
+3. **Facilitator** computes and signs a fee block. If fee sponsorship is disabled, it should use the vote quotes obtained in the previous step to create the block to ensure it pays exactly the fees it validated to have received from the client.
 4. **Facilitator** transmits the blocks to the network by requesting the votes from the representatives and publishing the combined vote staple to the network. If fee sponsorship is disabled, it should send the vote quotes obtained in a previous step.
 5. **Facilitator** sends the `SettlementResponse` to the **Resource Server**
 
