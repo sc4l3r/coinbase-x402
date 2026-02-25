@@ -3,7 +3,7 @@
 ## Summary
 
 The `exact` scheme on Keeta transfers a specific amount of a token (such as USDC) on the Keeta network from the payer to the resource server.
-The payer constructs a signed block containing the operations to fulfill the `paymentRequirements` and pay for the network's fees.
+The payer constructs a signed block containing the operations to fulfill the `paymentRequirements` and, if fee sponsorship is disabled, pay the fees as quoted by the facilitator.
 The facilitator can validate and submit the signed block to the blockchain but cannot alter it to redirect funds to any other address.
 
 **Version Support:** This specification supports x402 v2 protocol only.
@@ -18,24 +18,18 @@ sequenceDiagram
     participant Blockchain;
 
     Client->>Server: GET /api
-    Server-->>Client: 402 - Payment Required<br>with extra
-    opt Query network fees if unknown and extra.feePayer is set
-        Client->>Client: Create & sign tempBlock
-        Client->>Blockchain: getQuotes(tempBlock)
-        Blockchain-->>Client: Array<VoteQuote>
+    opt If fees not sponsored and quote not cached
+        Server->>Facilitator: POST /fee-quote
+        Facilitator-->>Server: FeeQuote
     end
-    Client->>Client: Create & sign block
+    Server-->>Client: 402 - Payment Required<br>with extra
+    Client->>Client: Create & sign block(s)
     Client->>Server: GET /api <br>with PaymentPayload
     Server->>Facilitator: POST /verify
     Facilitator->>Facilitator: Parse block,<br>verify signature,<br>verify requirements
     Facilitator-->>Server: VerifyResponse
     Server->>Facilitator: POST /settle
-    opt Query network fees if extra.feePayer is set
-        Facilitator->>Blockchain: getQuotes(block)
-        Blockchain-->>Facilitator: Array<VoteQuote>
-        Facilitator->>Facilitator: Verify fees sent to feePayer suffice
-    end
-    Facilitator->>Facilitator: Create & sign fee block
+    Facilitator->>Facilitator: Verify fees match quote,<br>create & sign fee block
     Facilitator->>Blockchain: Collect votes and<br>submit vote staple
     Blockchain-->>Facilitator: Confirmation
     Facilitator-->>Server: SettlementResponse with<br>Vote Block Hash
@@ -43,23 +37,88 @@ sequenceDiagram
 ```
 
 1.  **Client** makes a request to a **Resource Server**.
-2.  **Resource Server** responds with a payment required signal containing `PaymentRequired`. If the facilitator does not support fee sponsorship, the `extra.feePayer` field is set to the account address of the entity that will pay the fee for the transaction, typically the facilitator. Otherwise `extra.feePayer` unset.
-3.  **Client** creates and signs a block with a `SEND` operation to transfer the specified amount of the token to the recipient. If the `extra.external` field is set, the client sets the `external` field to the specified value in the `SEND` operation. If `extra.feePayer` is set, the client also adds a `SEND` operation to transfer the network's fees to the specified address. The block is **not** published to the network. Optionally, if the client does not know the required fees for the transaction, it may request vote quotes from the network's representatives to calculate the expected amount of fees.
-4.  **Client** serializes the signed block into its ASN.1 DER representation and encodes it as a Base64 string.
-5.  **Client** sends a new request to the **Resource Server** with the `PaymentPayload` containing the Base64-encoded signed block.
-6.  **Resource Server** receives the request and forwards the `PaymentPayload` and `PaymentRequirements` to a **Facilitator's** `/verify` endpoint.
-7. **Facilitator** decodes and parses the signed block and verifies the block according to the [verification rules](#verification).
-8. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
-9. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
-10. **Facilitator** verifies the block according to the [settlement rules](#settlement). It computes and signs a fee block as the `feePayer` to pay for the fees, requests votes for the blocks from the network's representatives and publishes the combined vote staple to the network.
-11. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
-12. **Resource Server** grants the **Client** access to the resource in its response.
+2.  If fees are not sponsored (as indicated by the `extra.feeSponsored` field in the `/supported` endpoint of the facilitator), the **Resource Server** queries the **Facilitator's** [`/fee-quote` endpoint](#fee-quote-endpoint) to obtain a fee quote (or uses a cached quote that has not expired).
+3.  **Resource Server** responds with a payment required signal containing `PaymentRequired`. If fees are not sponsored, the `extra.feeQuote` field is set to the facilitator's fee quote. Otherwise `extra.feeQuote` is unset.
+4.  **Client** creates and signs a block with a `SEND` operation to transfer the specified amount of the token to the recipient. If the `extra.external` field is set, the client sets the `external` field to the specified value in the `SEND` operation. If `extra.feeQuote` is set, the client also adds a `SEND` operation to transfer `feeQuote.amount` of `feeQuote.token` to the `feeQuote.feePayer` address. The block is **not** published to the network. If `extra.supportsAdditionalOperations` is `true`, the client may add additional operations to the block and may include additional signed blocks in the payload.
+5.  **Client** serializes the signed block (and any additional blocks) into their ASN.1 DER representation and encodes them as Base64 strings.
+6.  **Client** sends a new request to the **Resource Server** with the `PaymentPayload` containing the Base64-encoded signed block(s).
+7.  **Resource Server** receives the request and forwards the `PaymentPayload` and `PaymentRequirements` to a **Facilitator's** `/verify` endpoint.
+8. **Facilitator** decodes and parses the signed block(s) and verifies the block according to the [verification rules](#verification).
+9. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
+10. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
+11. **Facilitator** verifies the block according to the [settlement rules](#settlement). It computes and signs a fee block as the `feeQuote.feePayer` to pay for the fees, requests votes for the blocks (including any additional blocks) from the network's representatives and publishes the combined vote staple to the network.
+12. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
+13. **Resource Server** grants the **Client** access to the resource in its response.
 
 ### Fee Sponsorship
 
-The facilitator may support sponsorship of the network fees which the client determines via the `extra.feePayer` field (see [Payment header payload](#payment-header-payload)).
-In that case, the client does not have to query the network's fees and does not include a `SEND` operation to pay the fees to the `feePayer` address.
-Moreover, the facilitator does not have to ensure that they get the necessary fees from the client.
+The facilitator advertises whether it sponsors network fees via `extra.feeSponsored` in its `/supported` endpoint.
+
+When fees are sponsored, `extra.feeQuote` is unset and the client does not include a `SEND` operation to pay fees.
+
+When fees are not sponsored, the server obtains a fee quote from the facilitator and includes it as `extra.feeQuote`. The client must include a `SEND` operation to pay `feeQuote.amount` of `feeQuote.token` to the `feeQuote.feePayer` address.
+
+## Fee Quote Endpoint
+
+Representatives in the Keeta network have a flexible fee structure where each independently defines the fee token and amount they require.
+Because the facilitator may use different representatives than the client would, a client querying the network directly could see different fee amounts or tokens than what the facilitator actually needs.
+The fee quote endpoint solves this by having the facilitator declare exactly the fees it expects and letting them handle potential fee token conversions independently from the client.
+
+When `feeSponsored` is `false`, the resource server must obtain a fee quote from the facilitator before responding to clients with payment requirements.
+
+### Request
+
+`POST /fee-quote`
+
+**Request Body:**
+
+```json
+{
+  "network": "keeta:21378"
+}
+```
+
+**Field Descriptions:**
+
+- `network`: CAIP-2 network identifier, e.g. `keeta:21378` (mainnet) or `keeta:1413829460` (testnet)
+
+### Response
+
+```json
+{
+  "id": "8d6b07bb-b640-4621-801b-fcd6d4320b2d",
+  "network": "keeta:21378",
+  "feePayer": "keeta_aa5432zyxwvutsrqponmlkjihgfedcba765432zyxwvutsrqponmlkjihgfedcb",
+  "amount": "8160000000000000",
+  "token": "keeta_anqdilpazdekdu4acw65fj7smltcp26wbrildkqtszqvverljpwpezmd44ssg",
+  "expiry": "2026-02-26T12:00:00Z",
+  "signature": "base64..."
+}
+```
+
+**Field Descriptions:**
+
+- `id`: Random unique identifier for this quote (e.g., a UUID v4)
+- `network`: CAIP-2 network identifier the quote is valid for (e.g., `keeta:21378`)
+- `feePayer`: Base32-encoded public key of the fee recipient account
+- `token`: Base32-encoded identifier public key of the fee token
+- `amount`: Fee amount in atomic units of the given `token` (e.g. `"8160000000000000"` = 0.00816 KTA since KTA has 18 decimals on mainnet)
+- `expiry`: ISO 8601 timestamp when the quote expires (e.g., `"2026-02-26T12:00:00Z"`)
+- `signature`: Base64-encoded signature over the quote, created with the `feePayer` private key
+
+### Signature
+
+The signature is computed over the canonical JSON serialization of the quote fields (excluding the `signature`).
+The canonical form is a JSON object with keys sorted alphabetically and serialized with no extra whitespace:
+
+```json
+{"amount":"...","expiry":"...","feePayer":"...","id":"...","network":"...","token":"..."}
+```
+
+The facilitator signs the UTF-8 encoded bytes of this string using their private key (e.g. the one corresponding to `feePayer`) and Base64-encodes the resulting signature.
+
+The server may cache quotes according to `expiry`.
+The entire quote object is forwarded to clients via `extra.feeQuote` and passed back through the payment flow so the facilitator can verify the signature at verification time.
 
 ## Payment header payload
 
@@ -76,8 +135,17 @@ In addition to the standard x402 `PaymentRequirements` fields, the `exact` schem
   "payTo": "keeta_aabcdefghijklmnopqrstuvwxyz234567abcdefghijklmnopqrstuvwxyz2345",
   "maxTimeoutSeconds": 60,
   "extra": {
-    "feePayer": "keeta_aa5432zyxwvutsrqponmlkjihgfedcba765432zyxwvutsrqponmlkjihgfedcb",
-    "external": "0123456789abcdef0123456789abcdef"
+    "feeQuote": {
+      "id": "8d6b07bb-b640-4621-801b-fcd6d4320b2d",
+      "network": "keeta:21378",
+      "feePayer": "keeta_aa5432zyxwvutsrqponmlkjihgfedcba765432zyxwvutsrqponmlkjihgfedcb",
+      "amount": "8160000000000000",
+      "token": "keeta_anqdilpazdekdu4acw65fj7smltcp26wbrildkqtszqvverljpwpezmd44ssg",
+      "expiry": "2026-02-26T12:00:00Z",
+      "signature": "base64..."
+    },
+    "external": "0123456789abcdef0123456789abcdef",
+    "supportsAdditionalOperations": true
   }
 }
 ```
@@ -90,20 +158,23 @@ In addition to the standard x402 `PaymentRequirements` fields, the `exact` schem
 - `asset`: The Base32-encoded identifier public key of the token (e.g., USDC on Keeta mainnet: `keeta_amnkge74xitii5dsobstldatv3irmyimujfjotftx7plaaaseam4bntb7wnna`)
 - `payTo`: The Base32-encoded public key of the recipient account
 - `maxTimeoutSeconds`: Maximum time in seconds before the payment expires
-- `extra.feePayer`: **Optional**: If fee sponsorship is disabled, it contains the Base32-encoded public key of the account which pays the fees, typically the facilitator.
+- `extra.feeQuote`: **Optional**. Present when fees are not sponsored. Contains the facilitator's fee quote as returned by the [`/fee-quote` endpoint](#fee-quote-endpoint). The client uses `feeQuote.feePayer`, `feeQuote.amount`, and `feeQuote.token` to construct the fee `SEND` operation.
 - `extra.external`: **Optional**. `external` reference the client should set in the `SEND` operation to the `payTo` address (see [Keeta docs](https://static.network.keeta.com/docs/classes/KeetaNetSDK.Referenced.BlockOperationSEND.html#external))
+- `extra.supportsAdditionalOperations`: **Optional**. When `true`, the client may add additional operations to the payment block and may include additional signed blocks in the payload.
 
 ### PaymentPayload `payload` Field
 
 The `payload` field of the `PaymentPayload` must contain the following fields:
 
-- `block`: Base64 encoded ASN.1 DER-serialized signed block which contains a `SEND` operation to pay the requested amount of a token and, if `extra.feePayer` is set, a `SEND` operation to pay the fees to the `feePayer`.
+- `block`: Base64 encoded ASN.1 DER-serialized signed block which contains a `SEND` operation to pay the requested amount of a token and, if `extra.feeQuote` is set, a `SEND` operation to pay `feeQuote.amount` of `feeQuote.token` to `feeQuote.feePayer`.
+- `additionalBlocks`: **Optional**. Only permitted when `extra.supportsAdditionalOperations` is `true`. An array of Base64-encoded ASN.1 DER-serialized signed blocks to be published alongside the payment block.
 
 Example `payload`:
 
 ```json
 {
-  "block":"MIH6AgEAAgRURVNUBQAYEzIwMjYwMTIzMjIyNjUwLjczMFoEIgAC2Ynov21UzUtAf00BzdTbpJCJl1DuLlX4mAiKHx57uQAFAAQgmArjQZymslS0VvBMCNyicKkDyDUqoMQIfU8nl82JcvAwTqBMMEoEIgADEFUSmawYqevhKALRFALRYRGGrXR20+JHvI/5oE8qz00CAQEEIQNwgpeV3wC60ZR4DMHh0sDJDXFi4Mhesi9jMHvtPqp1SgRAdoNTNrjabm2gJBT2yAtVniYlpU4AzWZxb6b7rfMSw/d+C09d5qI6NmS1U2o+cOt+yJLEYE2qCEsKBYdHrgkwNA=="
+  "block":"MIH6AgEAAgRURVNUBQAYEzIwMjYwMTIzMjIyNjUwLjczMFoEIgAC2Ynov21UzUtAf00BzdTbpJCJl1DuLlX4mAiKHx57uQAFAAQgmArjQZymslS0VvBMCNyicKkDyDUqoMQIfU8nl82JcvAwTqBMMEoEIgADEFUSmawYqevhKALRFALRYRGGrXR20+JHvI/5oE8qz00CAQEEIQNwgpeV3wC60ZR4DMHh0sDJDXFi4Mhesi9jMHvtPqp1SgRAdoNTNrjabm2gJBT2yAtVniYlpU4AzWZxb6b7rfMSw/d+C09d5qI6NmS1U2o+cOt+yJLEYE2qCEsKBYdHrgkwNA==",
+  "additionalBlocks": []
 }
 ```
 
@@ -125,11 +196,21 @@ Full `PaymentPayload` object:
     "payTo": "keeta_aabravistgwbrkpl4euafuiualiwcemgvv2hnu7ci66i76naj4vm6tmeahmzria",
     "maxTimeoutSeconds": 60,
     "extra": {
-      "feePayer": "keeta_aa5432zyxwvutsrqponmlkjihgfedcba765432zyxwvutsrqponmlkjihgfedcb",
+      "feeQuote": {
+        "id": "8d6b07bb-b640-4621-801b-fcd6d4320b2d",
+        "network": "keeta:1413829460",
+        "feePayer": "keeta_aa5432zyxwvutsrqponmlkjihgfedcba765432zyxwvutsrqponmlkjihgfedcb",
+        "amount": "8160000",
+        "token": "keeta_anyiff4v34alvumupagmdyosydeq24lc4def5mrpmmyhx3j6vj2uucckeqn52",
+        "expiry": "2026-02-26T12:00:00Z",
+        "signature": "base64..."
+      },
+      "supportsAdditionalOperations": true
     }
   },
   "payload": {
-    "block":"MIH6AgEAAgRURVNUBQAYEzIwMjYwMTIzMjIyNjUwLjczMFoEIgAC2Ynov21UzUtAf00BzdTbpJCJl1DuLlX4mAiKHx57uQAFAAQgmArjQZymslS0VvBMCNyicKkDyDUqoMQIfU8nl82JcvAwTqBMMEoEIgADEFUSmawYqevhKALRFALRYRGGrXR20+JHvI/5oE8qz00CAQEEIQNwgpeV3wC60ZR4DMHh0sDJDXFi4Mhesi9jMHvtPqp1SgRAdoNTNrjabm2gJBT2yAtVniYlpU4AzWZxb6b7rfMSw/d+C09d5qI6NmS1U2o+cOt+yJLEYE2qCEsKBYdHrgkwNA=="
+    "block":"MIH6AgEAAgRURVNUBQAYEzIwMjYwMTIzMjIyNjUwLjczMFoEIgAC2Ynov21UzUtAf00BzdTbpJCJl1DuLlX4mAiKHx57uQAFAAQgmArjQZymslS0VvBMCNyicKkDyDUqoMQIfU8nl82JcvAwTqBMMEoEIgADEFUSmawYqevhKALRFALRYRGGrXR20+JHvI/5oE8qz00CAQEEIQNwgpeV3wC60ZR4DMHh0sDJDXFi4Mhesi9jMHvtPqp1SgRAdoNTNrjabm2gJBT2yAtVniYlpU4AzWZxb6b7rfMSw/d+C09d5qI6NmS1U2o+cOt+yJLEYE2qCEsKBYdHrgkwNA==",
+    "additionalBlocks": []
   }
 }
 ```
@@ -140,30 +221,41 @@ Steps to verify a payment for the `exact` scheme on Keeta:
 
 1. Verify `x402Version` is `2`.
 2. Verify the network matches the agreed upon chain (CAIP-2 format: `keeta:<network_id>`).
-3. Verify that the `extra.feePayer` field matches the facilitator's configuration:
-    1. If `extra.feePayer` is unset, verify that the facilitator supports fee sponsoring.
-    2. If `extra.feePayer` is set, verify that it is one of the facilitator's addresses.
-4. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
+3. Verify that `extra.supportsAdditionalOperations` matches the facilitator's configuration.
+4. Verify that the `extra.feeQuote` field matches the facilitator's configuration:
+    1. If `extra.feeQuote` is unset, verify that the facilitator supports fee sponsoring.
+    2. If `extra.feeQuote` is set:
+        - Verify the `feeQuote.signature` to ensure the quote originated from the facilitator.
+        - Verify that `feeQuote.expiry` has not passed.
+        - Verify that `feeQuote.feePayer` is one of the facilitator's addresses.
+5. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
     1. Verify that the signature is valid.
     2. Verify that the `network` matches the agreed upon Keeta `network_id`.
-    3. Verify that the `operations` contain exactly one operation if `extra.feePayer` is unset, and more than one operation if `extra.feePayer` is set.
+    3. Verify the operation count:
+        - If `extra.feeQuote` is unset and `extra.supportsAdditionalOperations` is `false`: exactly one operation.
+        - If `extra.feeQuote` is set and `extra.supportsAdditionalOperations` is `false`: exactly two operations.
+        - If `extra.supportsAdditionalOperations` is `true`: at least the required number of operations above but additional operations are permitted.
     4. Verify that the first operation in `operations` is a `SEND` operation to pay the server for which:
         - The `token` matches the `requirements.asset`.
         - The `amount` matches the `requirements.amount`.
         - The `to` matches the `requirements.payTo`.
         - The `external` matches the `extra.external` if set.
-    5. If the `extra.feePayer` is set, verify that the operations following the previous `SEND` operation are `SEND` operations to pay the network fees to the `extra.feePayer` for which:
-        - The `to` matches the `extra.feePayer` and is one of the facilitator's own addresses.
+    5. If `extra.feeQuote` is set, verify that the operation following the payment `SEND` is a `SEND` operation to pay the quoted fees for which:
+        - The `to` matches `feeQuote.feePayer` and is one of the facilitator's own addresses.
+        - The `token` matches `feeQuote.token`.
+        - The `amount` matches `feeQuote.amount`.
+6. If `payload.additionalBlocks` is present:
+    1. Verify that `extra.supportsAdditionalOperations` is `true`.
+    2. For each additional block, decode and deserialize the Base64 and ASN.1 DER-encoded block and verify that the signature is valid.
 
 ## Settlement
 
 Settlement is performed through the facilitator:
 
-1. **Facilitator** receives the `block`.
-2. If the **Facilitator** does not support fee sponsorship, it ensures that the block contains `SEND` operations which send at least the network's required funds to its own address by requesting vote quotes from the network.
-3. **Facilitator** computes and signs a fee block. If fee sponsorship is disabled, it should use the vote quotes obtained in the previous step to create the block to ensure it pays exactly the fees it validated to have received from the client.
-4. **Facilitator** transmits the blocks to the network by requesting the votes from the representatives and publishing the combined vote staple to the network. If fee sponsorship is disabled, it should send the vote quotes obtained in a previous step.
-5. **Facilitator** sends the `SettlementResponse` to the **Resource Server**
+1. **Facilitator** receives the `block` (and `additionalBlocks` if present).
+2. **Facilitator** computes and signs a fee block.
+3. **Facilitator** transmits the blocks (including additional blocks if enabled) to the network by requesting the votes from the representatives and publishing the combined vote staple to the network.
+4. **Facilitator** sends the `SettlementResponse` to the **Resource Server**.
 
 ### `SettlementResponse`
 
