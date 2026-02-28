@@ -159,7 +159,7 @@ In addition to the standard x402 `PaymentRequirements` fields, the `exact` schem
 - `payTo`: The Base32-encoded public key of the recipient account
 - `maxTimeoutSeconds`: Maximum time in seconds before the payment expires
 - `extra.feeQuote`: **Optional**. Present when fees are not sponsored. Contains the facilitator's fee quote as returned by the [`/fee-quote` endpoint](#fee-quote-endpoint). The client uses `feeQuote.feePayer`, `feeQuote.amount`, and `feeQuote.token` to construct the fee `SEND` operation.
-- `extra.external`: **Optional**. `external` reference the client should set in the `SEND` operation to the `payTo` address (see [Keeta docs](https://static.network.keeta.com/docs/classes/KeetaNetSDK.Referenced.BlockOperationSEND.html#external))
+- `extra.external`: **Optional**. `external` reference the client should set in the `SEND` operation to the `payTo` address (see [Keeta docs](https://static.network.keeta.com/docs/classes/KeetaNetSDK.Referenced.BlockOperationSEND.html#external)). This is especially useful for resource servers to automatically off-ramp received payments to a bank account or bridge them to a different chain via asset movement anchors.
 - `extra.supportsAdditionalOperations`: **Optional**. When `true`, the client may add additional operations to the payment block and may include additional signed blocks in the payload.
 
 ### PaymentPayload `payload` Field
@@ -167,7 +167,7 @@ In addition to the standard x402 `PaymentRequirements` fields, the `exact` schem
 The `payload` field of the `PaymentPayload` must contain the following fields:
 
 - `block`: Base64 encoded ASN.1 DER-serialized signed block which contains a `SEND` operation to pay the requested amount of a token and, if `extra.feeQuote` is set, a `SEND` operation to pay `feeQuote.amount` of `feeQuote.token` to `feeQuote.feePayer`.
-- `additionalBlocks`: **Optional**. Only permitted when `extra.supportsAdditionalOperations` is `true`. An array of Base64-encoded ASN.1 DER-serialized signed blocks to be published alongside the payment block.
+- `additionalBlocks`: **Optional**. Only permitted when `extra.supportsAdditionalOperations` is `true`. An array of Base64-encoded ASN.1 DER-serialized signed blocks to be published alongside the payment block. Clients may want to set this to chain additional operations (e.g. token swaps) directly to the payment block in the same vote staple. This eliminates the need to wait for payment confirmation before separately publishing and waiting for the additional blocks.
 
 Example `payload`:
 
@@ -227,7 +227,6 @@ Steps to verify a payment for the `exact` scheme on Keeta:
     2. If `extra.feeQuote` is set:
         - Verify the `feeQuote.signature` to ensure the quote originated from the facilitator.
         - Verify that `feeQuote.expiry` has not passed.
-        - Verify that `feeQuote.feePayer` is one of the facilitator's addresses.
 5. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
     1. Verify that the signature is valid.
     2. Verify that the `network` matches the agreed upon Keeta `network_id`.
