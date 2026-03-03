@@ -31,7 +31,7 @@ sequenceDiagram
     Facilitator->>Facilitator: Create & sign fee block
     Facilitator->>Blockchain: Collect votes and<br>submit vote staple
     Blockchain-->>Facilitator: Confirmation
-    Facilitator-->>Server: SettlementResponse with<br>Vote Block Hash
+    Facilitator-->>Server: SettlementResponse with<br>Block Hash
     Server-->>Client: Requested Content
 ```
 
@@ -45,7 +45,7 @@ sequenceDiagram
 8. **Facilitator** returns a `VerifyResponse` to the **Resource Server**.
 9. **Resource Server**, upon successful verification, forwards the payload to the facilitator's `/settle` endpoint.
 10. **Facilitator** verifies the block according to the [settlement rules](#settlement). It computes and signs a fee block, requests votes for the blocks from the network's representatives and publishes the combined vote staple to the network.
-11. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the vote staple to the **Resource Server**.
+11. Upon successful on-chain settlement, the **Facilitator** responds with a `SettlementResponse` including the hash of the client's payment block to the **Resource Server**.
 12. **Resource Server** grants the **Client** access to the resource in its response.
 
 ## Payment header payload
@@ -156,7 +156,7 @@ The `SettlementResponse` for the exact scheme on Keeta:
 
 **Field Descriptions:**
 
-- `transaction`: The [`VoteBlockHash`](https://static.network.keeta.com/docs/classes/KeetaNetSDK.Referenced.VoteBlockHash.html) of the submitted vote staple.
+- `transaction`: The hash of the client's block which contains the payment to the server.
 - `network`: CAIP-2 network identifier, e.g. `keeta:21378` (mainnet) or `keeta:1413829460` (testnet)
 - `payer`: The Base32-encoded public key of the account that payed the server
 
