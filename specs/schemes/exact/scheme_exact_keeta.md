@@ -184,3 +184,9 @@ We have found various possible solutions to these challenges, but each of them h
 
 - **Additional fee-quote endpoint**: The client could query the facilitator on an additional endpoint (e.g., `/fee-quote`) to obtain exactly the fees the facilitator currently requires. However, this would require the client to trust the facilitator to not charge overly high fees and introduces a non-standard, additional facilitator endpoint beyond what x402 currently specifies.
 - **Send vote quotes**: Alternatively, clients could request vote quotes for their blocks directly from the network representatives and include their block, fee block, and vote quotes in the `PaymentPayload`. However, as more representatives are added to the network, the required number of vote quotes grows, and the combined payload could exceed the 8 KB HTTP header size limit commonly enforced by default by reverse proxies such as nginx.
+
+### Future Improvements
+
+As the Keeta network develops and supports more features in the future, this specification should be improved to support these natively, including:
+
+- **Temporary approvals**: It may become possible for clients to sign temporary / one-time spending approvals. Then, instead of sending a specific payment block, they could send the approval instead to allow resource servers / facilitators to redeem these, similar to how the `eip3009` asset transfer in the EVM scheme uses the `transferWithAuthorization` function. This may then also include the payment for the network fees and enable non-sponsored fee flows.
