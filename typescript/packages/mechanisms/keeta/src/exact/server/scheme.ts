@@ -67,9 +67,9 @@ export class ExactKeetaScheme implements SchemeNetworkServer {
    * @param supportedKind.x402Version - The x402 protocol version
    * @param supportedKind.scheme - The payment scheme
    * @param supportedKind.network - The network identifier
-   * @param supportedKind.extra - Extra metadata including feePayer address and feeSponsored
+   * @param supportedKind.extra - Extra metadata
    * @param extensionKeys - Extension keys supported by the facilitator
-   * @returns Enhanced payment requirements with feePayer and feeSponsored in extra
+   * @returns Enhanced payment requirements
    */
   enhancePaymentRequirements(
     paymentRequirements: PaymentRequirements,
@@ -82,24 +82,11 @@ export class ExactKeetaScheme implements SchemeNetworkServer {
     extensionKeys: string[],
   ): Promise<PaymentRequirements> {
     void extensionKeys;
-
-    const extra: Record<string, unknown> = { ...paymentRequirements.extra };
-
-    // Add feePayer from supportedKind.extra to payment requirements
-    // The facilitator provides its address as the fee payer for transaction fees
-    if (typeof supportedKind.extra?.feePayer === "string") {
-      extra.feePayer = supportedKind.extra.feePayer;
-    }
-
-    // Add feeSponsored from supportedKind.extra to payment requirements
-    // The facilitator defines whether it sponsors transaction fees
-    if (typeof supportedKind.extra?.feeSponsored === "boolean") {
-      extra.feeSponsored = supportedKind.extra.feeSponsored;
-    }
+    void supportedKind;
 
     // TODO: Add `external` field once we have support for it such
     //       as an integration of asset movement anchors.
-    return Promise.resolve({ ...paymentRequirements, extra });
+    return Promise.resolve(paymentRequirements);
   }
 
   /**

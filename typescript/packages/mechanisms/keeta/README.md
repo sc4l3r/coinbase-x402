@@ -51,7 +51,6 @@ registerExactKeetaScheme(facilitator, {
   signer: keetaSigner,
   // Keeta Testnet
   networks: "keeta:1413829460",
-  feeSponsored: process.env.FACILITATOR_SPONSOR_FEES === "true",
 });
 ```
 

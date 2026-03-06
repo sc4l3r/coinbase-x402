@@ -13,11 +13,6 @@ export interface KeetaFacilitatorConfig {
   signer: FacilitatorKeetaSigner;
 
   /**
-   * Whether to sponsor transaction fees
-   */
-  feeSponsored?: boolean;
-
-  /**
    * Networks to register (single network or array of networks)
    * Examples: "keeta:21378", ["keeta:21378", "keeta:1413829460"]
    */
@@ -50,7 +45,7 @@ export function registerExactKeetaScheme(
   facilitator: x402Facilitator,
   config: KeetaFacilitatorConfig,
 ): x402Facilitator {
-  facilitator.register(config.networks, new ExactKeetaScheme(config.signer, config.feeSponsored));
+  facilitator.register(config.networks, new ExactKeetaScheme(config.signer));
 
   return facilitator;
 }

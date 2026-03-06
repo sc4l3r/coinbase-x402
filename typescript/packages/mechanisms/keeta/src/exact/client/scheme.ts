@@ -36,22 +36,8 @@ export class ExactKeetaScheme implements SchemeNetworkClient {
     }
 
     let external: string | undefined;
-    if (typeof paymentRequirements.extra.external === "string") {
+    if (typeof paymentRequirements.extra?.external === "string") {
       external = paymentRequirements.extra.external;
-    }
-
-    const feePayer = paymentRequirements.extra.feePayer;
-    if (feePayer !== undefined && typeof feePayer !== "string") {
-      throw new Error("Fee payer must be a string");
-    }
-
-    const isSponsored = paymentRequirements.extra.feeSponsored;
-    if (typeof isSponsored !== "boolean") {
-      throw new Error("Fee sponsored must be a boolean");
-    }
-
-    if (isSponsored === false && typeof feePayer !== "string") {
-      throw new Error("Fee payer must be set when transaction is not sponsored");
     }
 
     const paymentBlock = await this.signer.computePaymentBlock(
@@ -59,9 +45,7 @@ export class ExactKeetaScheme implements SchemeNetworkClient {
       recipient,
       amount,
       token,
-      isSponsored,
       external,
-      feePayer,
     );
 
     const payload: ExactKeetaPayload = {

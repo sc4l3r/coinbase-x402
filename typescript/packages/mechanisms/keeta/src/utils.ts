@@ -126,69 +126,6 @@ export function createKeetaUserClient(
   return KeetaNet.UserClient.fromNetwork(keetaNetwork, account);
 }
 
-export type FeesByToken = Map<string, bigint>;
-
-/**
- * Computes the fees required for a block which includes a payment SEND operation and
- * a SEND operation to pay fees to the fee payer.
- *
- * @param userClient - KeetaNet UserClient to use for network requests
- * @param feePayerAddress - Address of the account that will pay the fees
- * @param recipient - Address of the account that will receive the tokens
- * @param token - Token to send
- * @param amount - Amount of tokens to send
- * @returns Map of fee token addresses to their respective amounts
- */
-export async function computeFees(
-  userClient: KeetaNet.UserClient,
-  feePayerAddress: string,
-  recipient: InstanceType<typeof KeetaNet.lib.Account>,
-  token: InstanceType<
-    typeof KeetaNet.lib.Account<typeof KeetaNet.lib.Account.AccountKeyAlgorithm.TOKEN>
-  >,
-  amount: bigint,
-): Promise<FeesByToken> {
-  const feePayer = KeetaNet.lib.Account.fromPublicKeyString(feePayerAddress);
-
-  const tempBuilder = userClient.initBuilder();
-  tempBuilder.send(recipient, amount, token);
-
-  // Include an operation to pay the fees in the fee calculation
-  // to more accurately reflect the blocks that will be sent and with
-  // that the fees that will have to be paid.
-  tempBuilder.send(feePayer, 1n, userClient.baseToken);
-  const { blocks } = await tempBuilder.computeBlocks();
-
-  // Get up-to-date quotes from the network
-  const quotes = await userClient.getQuotes(blocks);
-
-  return getSumOfFeesByToken(userClient, quotes);
-}
-
-/**
- * Calculates the sum of fees by token for the given quotes.
- *
- * @param userClient - The KeetaNet UserClient to use for the calculation.
- * @param quotes - The quotes to calculate the sum of fees by token for.
- * @returns A map of token addresses to the sum of fees for that token.
- */
-export async function getSumOfFeesByToken(
-  userClient: InstanceType<typeof KeetaNet.UserClient>,
-  quotes: InstanceType<typeof KeetaNet.lib.Vote.Quote>[],
-): Promise<FeesByToken> {
-  const fees = new Map() as FeesByToken;
-
-  for (const quote of quotes) {
-    if (!quote.fee) continue;
-    const feeTokenAddress = quote.fee.token ?? userClient.baseToken;
-
-    const feeSum = fees.get(feeTokenAddress.publicKeyString.toString()) ?? 0n;
-    fees.set(feeTokenAddress.publicKeyString.toString(), feeSum + quote.fee.amount);
-  }
-
-  return fees;
-}
-
 /**
  * A cache of Keeta UserClients to keep only one UserClient per network and address combination.
  * This avoids creating new instances every time a network operation is performed since it
