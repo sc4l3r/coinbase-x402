@@ -121,16 +121,17 @@ Full `PaymentPayload` object:
 Steps to verify a payment for the `exact` scheme on Keeta:
 
 1. Verify `x402Version` is `2`.
-2. Verify the network matches the agreed upon chain (CAIP-2 format: `keeta:<network_id>`).
-3. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
+2. Verify the `scheme` is `exact`.
+3. Verify the network matches the agreed upon chain (CAIP-2 format: `keeta:<network_id>`).
+4. Decode and deserialize the Base64 and ASN.1 DER-encoded `payload.block` and:
     1. Verify that the signature is valid.
     2. Verify that the `network` matches the agreed upon Keeta `network_id`.
     3. Verify that the block contains exactly one operation.
     4. Verify that the operation is a `SEND` operation to pay the server for which:
-        - The `token` matches the `requirements.asset`.
-        - The `amount` matches the `requirements.amount`.
-        - The `to` matches the `requirements.payTo`.
-        - The `external` matches the `extra.external` if set.
+        1. The `token` matches the `requirements.asset`.
+        2. The `amount` matches the `requirements.amount`.
+        3. The `to` matches the `requirements.payTo`.
+        4. The `external` matches the `extra.external` if set.
 
 ## Settlement
 
