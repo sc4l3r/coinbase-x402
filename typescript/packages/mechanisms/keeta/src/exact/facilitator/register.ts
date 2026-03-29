@@ -1,6 +1,7 @@
 import { x402Facilitator } from "@x402/core/facilitator";
 import { Network } from "@x402/core/types";
 import { FacilitatorKeetaSigner } from "../../signer";
+import { SettlementQueue } from "./queue";
 import { ExactKeetaScheme } from "./scheme";
 
 /**
@@ -17,6 +18,12 @@ export interface KeetaFacilitatorConfig {
    * Examples: "keeta:21378", ["keeta:21378", "keeta:1413829460"]
    */
   networks: Network | Network[];
+
+  /**
+   * Optional settlement queue for serializing block submissions per fee payer.
+   * If not provided, a default queue is created internally.
+   */
+  queue?: SettlementQueue;
 }
 
 /**
@@ -45,7 +52,7 @@ export function registerExactKeetaScheme(
   facilitator: x402Facilitator,
   config: KeetaFacilitatorConfig,
 ): x402Facilitator {
-  facilitator.register(config.networks, new ExactKeetaScheme(config.signer));
+  facilitator.register(config.networks, new ExactKeetaScheme(config.signer, config.queue));
 
   return facilitator;
 }
