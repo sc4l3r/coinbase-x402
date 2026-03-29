@@ -8,6 +8,7 @@ import type {
 } from "@x402/core/types";
 import type { FacilitatorKeetaSigner } from "../../signer";
 import type { ExactKeetaPayload } from "../../types";
+import { SettlementQueue } from "./queue";
 
 /**
  * Keeta facilitator implementation for the Exact payment scheme.
@@ -16,13 +17,20 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
   readonly scheme = "exact";
   readonly caipFamily = "keeta:*";
 
+  private readonly queue: SettlementQueue;
+
   /**
-   * Creates a new ExactKeetaFacilitator instance.
+   * Creates a new ExactKeetaScheme instance.
    *
    * @param signer - The Keeta client for facilitator operations
-   * @returns ExactKeetaFacilitator instance
+   * @param queue - Optional queue to use for settlement requests. If unset, defaults to an in-memory implementation.
    */
-  constructor(private readonly signer: FacilitatorKeetaSigner) {}
+  constructor(
+    private readonly signer: FacilitatorKeetaSigner,
+    queue?: SettlementQueue,
+  ) {
+    this.queue = queue ?? new SettlementQueue(signer);
+  }
 
   /**
    * Get mechanism-specific extra data for the supported kinds endpoint.
@@ -123,7 +131,8 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
   }
 
   /**
-   * Settles a payment by submitting the transaction.
+   * Settles a payment by submitting the transaction to the network.
+   * Inserts the payload into a queue and waits for the item to be processed.
    *
    * @param payload - The payment payload to settle
    * @param requirements - The payment requirements
@@ -149,7 +158,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
     try {
       const feePayer = this.getRandomFeePayer();
 
-      const blockHash = await this.signer.submitBlock(
+      const blockHash = await this.queue.enqueue(
         feePayer,
         exactKeetaPayload.block,
         requirements.network,
