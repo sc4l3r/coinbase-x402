@@ -44,8 +44,8 @@
     "vitest": "^3.0.5"
   },
   "dependencies": {
-    "@keetanetwork/anchor": "^0.0.48",
-    "@keetanetwork/keetanet-client": "^0.14.14",
+    "@keetanetwork/anchor": "^0.0.50",
+    "@keetanetwork/keetanet-client": "^0.16.1",
     "@x402/core": "workspace:^"
   },
   "exports": {
