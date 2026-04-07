@@ -76,6 +76,15 @@ export type FacilitatorKeetaSigner = {
   getAddresses(): readonly string[];
 
   /**
+   * Get the Keeta UserClient for a given fee payer account.
+   *
+   * @param feePayer - The fee payer account to get the Keeta UserClient for
+   * @param network - The network to get the client for
+   * @returns KeetaNet.UserClient
+   */
+  getKeetaUserClient(feePayer: string, network: Network): InstanceType<typeof KeetaNet.UserClient>;
+
+  /**
    * Sign a fee block and submit it with the given block as a vote staple
    *
    * @param feePayer - The fee payer account
@@ -115,6 +124,15 @@ export function toFacilitatorKeetaSigner(
 
   return {
     getAddresses: () => Array.from(publicKeyToAccount.keys()),
+
+    getKeetaUserClient: (feePayer: string, network: Network) => {
+      const feePayerAccount = publicKeyToAccount.get(feePayer);
+      if (!feePayerAccount) {
+        throw new Error(`Fee payer account ${feePayer} not found`);
+      }
+
+      return userClients.get(feePayerAccount, network);
+    },
 
     submitBlock: async (feePayer: string, encodedBlock: string, network: Network) => {
       const feePayerAccount = publicKeyToAccount.get(feePayer);

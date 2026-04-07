@@ -5,6 +5,7 @@ import type {
   SchemeNetworkFacilitator,
   SettleResponse,
   VerifyResponse,
+  Network,
 } from "@x402/core/types";
 import type { FacilitatorKeetaSigner } from "../../signer";
 import type { ExactKeetaPayload } from "../../types";
@@ -123,6 +124,15 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
       return payOperationVerificationResult;
     }
 
+    // 4.5 Simulate transaction
+    const simulateTransactionVerificationResult = await this.simulateTransaction(
+      block,
+      requirements,
+    );
+    if (simulateTransactionVerificationResult !== null) {
+      return simulateTransactionVerificationResult;
+    }
+
     return {
       isValid: true,
       invalidReason: undefined,
@@ -199,6 +209,17 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
   }
 
   /**
+   * Get a Keeta Client to perform requests to the network.
+   * Uses the UserClient of the first signer account and returns its client.
+   *
+   * @param network - Network to get the client for
+   * @returns KeetaNet.Client
+   */
+  private getKeetaClient(network: Network): InstanceType<typeof KeetaNet.Client> {
+    return this.signer.getKeetaUserClient(this.signer.getAddresses()[0], network).client;
+  }
+
+  /**
    * Verifies that the given payment operation matches the requirements.
    *
    * @param payOperation - Operation that should pay the required funds to the server
@@ -262,6 +283,82 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
         invalidReason: "invalid_exact_keeta_payload_payment_external_mismatch",
         payer: "",
       };
+    }
+
+    return null;
+  }
+
+  /**
+   * Simulates whether the given payment operation would succeed based on a few cheap checks.
+   *
+   * @param block - Block that should be simulated
+   * @param requirements - Requirements the transaction must fulfill
+   * @returns VerifyResponse on failure, null on success
+   */
+  private async simulateTransaction(
+    block: InstanceType<typeof KeetaNet.lib.Block>,
+    requirements: PaymentRequirements,
+  ): Promise<VerifyResponse | null> {
+    let signer: InstanceType<typeof KeetaNet.lib.Account>;
+    const isMultiSig = Array.isArray(block.signer);
+    if (isMultiSig) {
+      signer = block.signer[0];
+    } else {
+      signer = block.signer;
+    }
+
+    const client = this.getKeetaClient(requirements.network);
+
+    const [accountInfo, permissions] = await Promise.all([
+      client.getAccountInfo(block.account),
+      client.listACLsByPrincipal(signer, [block.account]),
+    ]);
+
+    // 4.5.1 Sufficient balance
+    const tokenBalance = accountInfo.balances.find(balance =>
+      balance.token.comparePublicKey(requirements.asset),
+    );
+    if (tokenBalance === undefined || tokenBalance.balance < BigInt(requirements.amount)) {
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_keeta_payload_insufficient_funds",
+        payer: "",
+      };
+    }
+
+    // 4.5.2 Account's head block matches block's previous
+    if (
+      (accountInfo.currentHeadBlock &&
+        !block.previous.compareHexString(accountInfo.currentHeadBlock)) ||
+      (!accountInfo.currentHeadBlock &&
+        !block.previous.compareHexString(KeetaNet.lib.Block.getAccountOpeningHash(block.account)))
+    ) {
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_keeta_payload_previous_head_mismatch",
+        payer: "",
+      };
+    }
+
+    // 4.5.3 Block's signer is allowed to send as account
+    // If the block's account is equal to the signer permission is given.
+    // Otherwise, check if the signer is allowed to send on behalf of the account.
+    if (!block.account.comparePublicKey(signer)) {
+      const permission = permissions.find(permission =>
+        permission.entity.comparePublicKey(block.account),
+      );
+
+      if (
+        permission === undefined ||
+        (!permission.permissions.base.hasFlags("OWNER") &&
+          !permission.permissions.base.hasFlags("SEND_ON_BEHALF"))
+      ) {
+        return {
+          isValid: false,
+          invalidReason: "invalid_exact_keeta_payload_missing_permission",
+          payer: "",
+        };
+      }
     }
 
     return null;
