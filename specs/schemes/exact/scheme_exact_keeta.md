@@ -132,6 +132,10 @@ Steps to verify a payment for the `exact` scheme on Keeta:
         2. The `amount` matches the `requirements.amount`.
         3. The `to` matches the `requirements.payTo`.
         4. The `external` matches the `extra.external` if set.
+    5. Simulate the transaction by verifying that:
+        1. The `block.account` balance of `requirements.asset` is at least `requirements.amount`.
+        2. The head block hash of the `block.account` equals the `block.previous` hash.
+        3. The `block.signer` is allowed to send on behalf of the `block.account`, e.g. because `block.signer` is the same or has the permission such as `OWNER` or `SEND_ON_BEHALF`.
 
 ## Settlement
 
