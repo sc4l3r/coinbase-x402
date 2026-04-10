@@ -60,7 +60,10 @@ import {
   createEd25519Signer,
   type FacilitatorStellarSigner,
 } from "@x402/stellar";
+import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import express from "express";
@@ -89,6 +92,7 @@ const AVM_NETWORK =
   process.env.AVM_NETWORK ||
   "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=";
 const HEDERA_NETWORK = process.env.HEDERA_NETWORK || "hedera:testnet";
+const KEETA_NETWORK = process.env.KEETA_NETWORK || KEETA_TESTNET_CAIP2;
 const STELLAR_NETWORK = process.env.STELLAR_NETWORK || "stellar:testnet";
 const EVM_RPC_URL = process.env.EVM_RPC_URL;
 const SVM_RPC_URL = process.env.SVM_RPC_URL;
@@ -113,6 +117,7 @@ console.log(`🌐 SVM Network: ${SVM_NETWORK}`);
 console.log(`🌐 Aptos Network: ${APTOS_NETWORK}`);
 console.log(`🌐 AVM Network: ${AVM_NETWORK}`);
 console.log(`🌐 Hedera Network: ${HEDERA_NETWORK}`);
+console.log(`🌐 Keeta Network: ${KEETA_NETWORK}`);
 console.log(`🌐 Stellar Network: ${STELLAR_NETWORK}`);
 if (EVM_RPC_URL) console.log(`🌐 EVM RPC URL: ${EVM_RPC_URL}`);
 if (SVM_RPC_URL) console.log(`🌐 SVM RPC URL: ${SVM_RPC_URL}`);
@@ -444,6 +449,14 @@ if (hederaSigner) {
     HEDERA_NETWORK as Network,
     new ExactHederaScheme(hederaSigner),
   );
+if (process.env.KEETA_FACILITATOR_PASSPHRASE) {
+  const keetaAccount = KeetaNet.lib.Account.fromSeed(
+    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_FACILITATOR_PASSPHRASE),
+    0,
+  );
+  console.info(`Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`);
+  const keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
+  facilitator.register(KEETA_NETWORK as Network, new ExactKeetaScheme(keetaSigner));
 }
 if (stellarSigner) {
   facilitator.register(
@@ -771,6 +784,7 @@ app.get("/health", (req, res) => {
     avmNetwork: avmSigner ? AVM_NETWORK : "(not configured)",
     aptosNetwork: aptosAccount ? APTOS_NETWORK : "(not configured)",
     hederaNetwork: hederaSigner ? HEDERA_NETWORK : "(not configured)",
+    keetaNetwork: process.env.KEETA_FACILITATOR_PASSPHRASE ? KEETA_NETWORK : "(not configured)",
     stellarNetwork: stellarSigner ? STELLAR_NETWORK : "(not configured)",
     facilitator: "typescript",
     version: "2.0.0",

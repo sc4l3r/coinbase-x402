@@ -8,6 +8,7 @@
     "avm",
     "aptos",
     "hedera",
+    "keeta",
     "stellar"
   ],
   "x402Versions": [
@@ -41,6 +42,7 @@
       "APTOS_PRIVATE_KEY",
       "HEDERA_ACCOUNT_ID",
       "HEDERA_PRIVATE_KEY",
+      "KEETA_FACILITATOR_PASSPHRASE",
       "STELLAR_PRIVATE_KEY",
       "EVM_NETWORK",
       "SVM_NETWORK",

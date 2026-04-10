@@ -8,6 +8,7 @@
     "avm",
     "aptos",
     "hedera",
+    "keeta",
     "stellar"
   ],
   "x402Versions": [
@@ -43,6 +44,7 @@
       "HEDERA_PRIVATE_KEY",
       "HEDERA_NETWORK",
       "HEDERA_NODE_URL",
+      "KEETA_CLIENT_PASSPHRASE",
       "STELLAR_PRIVATE_KEY",
       "CHANNEL_SALT",
       "BATCH_SETTLEMENT_PHASE",

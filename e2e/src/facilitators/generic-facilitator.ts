@@ -57,6 +57,7 @@ export interface FacilitatorConfig {
   aptosPrivateKey?: string;
   hederaAccountId?: string;
   hederaPrivateKey?: string;
+  keetaFacilitatorPassphrase?: string;
   stellarPrivateKey?: string;
   tvmPrivateKey?: string;
   networks: NetworkSet;
@@ -122,6 +123,7 @@ export class GenericFacilitatorProxy extends BaseProxy implements FacilitatorPro
       APTOS_PRIVATE_KEY: config.aptosPrivateKey || '',
       HEDERA_ACCOUNT_ID: config.hederaAccountId || '',
       HEDERA_PRIVATE_KEY: config.hederaPrivateKey || '',
+      KEETA_FACILITATOR_PASSPHRASE: config.keetaFacilitatorPassphrase || '',
       STELLAR_PRIVATE_KEY: config.stellarPrivateKey || '',
       TVM_PRIVATE_KEY: config.tvmPrivateKey || '',
 
