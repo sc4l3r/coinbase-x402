@@ -18,12 +18,15 @@ import { ExactAptosScheme } from "@x402/aptos/exact/client";
 import { Account, Ed25519PrivateKey, PrivateKey, PrivateKeyVariants } from "@aptos-labs/ts-sdk";
 import { createClientHederaSigner, PrivateKey as HederaPrivateKey } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
+import { ExactKeetaScheme } from "@x402/keeta/exact/client";
+import { toClientKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
 import { ExactStellarScheme } from "@x402/stellar/exact/client";
 import { createEd25519Signer, type Ed25519Signer } from "@x402/stellar";
 import { ExactTvmScheme } from "@x402/tvm/exact/client";
 import { toClientTvmSigner, TVM_PROVIDER_TONAPI, TVM_PROVIDER_TONCENTER } from "@x402/tvm";
 import { ExactAvmScheme as ExactAvmClientScheme } from "@x402/avm/exact/client";
 import { toClientAvmSigner } from "@x402/avm";
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import { keyPairFromSeed, type KeyPair } from "@ton/crypto";
@@ -116,6 +119,14 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
       nodeUrl: process.env.HEDERA_NODE_URL || undefined,
     },
   );
+// Initialize Keeta signer if passphrase is provided
+let keetaSigner: ReturnType<typeof toClientKeetaSigner> | undefined;
+if (process.env.KEETA_CLIENT_PASSPHRASE) {
+  const keetaAccount = KeetaNet.lib.Account.fromSeed(
+    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_CLIENT_PASSPHRASE),
+    0,
+  );
+  keetaSigner = toClientKeetaSigner(keetaAccount);
 }
 
 // Initialize Stellar signer if key is provided
@@ -164,6 +175,8 @@ if (aptosAccount) {
 }
 if (hederaClientSigner) {
   client.register("hedera:*", new ExactHederaScheme(hederaClientSigner));
+if (keetaSigner) {
+  client.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner));
 }
 if (stellarSigner) {
   client.register("stellar:*", new ExactStellarScheme(stellarSigner));
