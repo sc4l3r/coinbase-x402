@@ -15,6 +15,8 @@ import { ExactAvmScheme } from "@x402/avm/exact/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { UptoEvmScheme } from "@x402/evm/upto/client";
 import { ExactSvmScheme } from "@x402/svm/exact/client";
+import { toClientKeetaSigner } from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/client";
 import { ExactStellarScheme } from "@x402/stellar/exact/client";
 import { createEd25519Signer } from "@x402/stellar";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
@@ -22,12 +24,14 @@ import { createClientHederaSigner, PrivateKey } from "@x402/hedera";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import { privateKeyToAccount } from "viem/accounts";
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 
 config();
 
 // Configuration - optional per network
 const avmPrivateKey = process.env.AVM_PRIVATE_KEY as string | undefined;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}` | undefined;
+const keetaPassphrase = process.env.KEETA_PASSPHRASE as string | undefined;
 const svmPrivateKey = process.env.SVM_PRIVATE_KEY as string | undefined;
 const stellarPrivateKey = process.env.STELLAR_PRIVATE_KEY as string | undefined;
 const hederaAccountId = process.env.HEDERA_ACCOUNT_ID;
@@ -47,12 +51,13 @@ async function main(): Promise<void> {
   if (
     !avmPrivateKey &&
     !evmPrivateKey &&
+    !keetaPassphrase &&
     !svmPrivateKey &&
     !stellarPrivateKey &&
     !(hederaAccountId && hederaPrivateKey)
   ) {
     console.error(
-      "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
+      "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_PASSPHRASE, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
     );
     process.exit(1);
   }
@@ -73,6 +78,17 @@ async function main(): Promise<void> {
     client.register("eip155:*", new ExactEvmScheme(evmSigner));
     client.register("eip155:*", new UptoEvmScheme(evmSigner));
     console.log(`Initialized EVM account: ${evmSigner.address}`);
+  }
+
+  // Register Keeta scheme if passphrase is provided
+  if (keetaPassphrase) {
+    const keetaAccount = KeetaNet.lib.Account.fromSeed(
+      await KeetaNet.lib.Account.seedFromPassphrase(keetaPassphrase),
+      0,
+    );
+    const keetaSigner = toClientKeetaSigner(keetaAccount);
+    client.register("keeta:*", new ExactKeetaScheme(keetaSigner));
+    console.log(`Initialized Keeta account: ${keetaAccount.publicKeyString.toString()}`);
   }
 
   // Register SVM scheme if private key is provided

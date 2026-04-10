@@ -15,6 +15,8 @@ import { ExactAvmScheme } from "@x402/avm/exact/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { ExactHederaScheme } from "@x402/hedera/exact/server";
 import { ExactSvmScheme } from "@x402/svm/exact/server";
+import { KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/server";
 import { ExactStellarScheme } from "@x402/stellar/exact/server";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import type { Network, Price } from "@x402/core/types";
@@ -24,14 +26,22 @@ config();
 // Configuration - optional per network
 const avmAddress = process.env.AVM_ADDRESS as string | undefined;
 const evmAddress = process.env.EVM_ADDRESS as `0x${string}` | undefined;
+const keetaAddress = process.env.KEETA_ADDRESS as string | undefined;
 const svmAddress = process.env.SVM_ADDRESS as string | undefined;
 const stellarAddress = process.env.STELLAR_ADDRESS as string | undefined;
 const hederaAddress = process.env.HEDERA_ACCOUNT_ID as string | undefined;
 
 // Validate at least one address is provided
-if (!avmAddress && !evmAddress && !svmAddress && !stellarAddress && !hederaAddress) {
+if (
+  !avmAddress &&
+  !evmAddress &&
+  !keetaAddress &&
+  !svmAddress &&
+  !stellarAddress &&
+  !hederaAddress
+) {
   console.error(
-    "❌ At least one of AVM_ADDRESS, EVM_ADDRESS, SVM_ADDRESS, STELLAR_ADDRESS, or HEDERA_ACCOUNT_ID is required",
+    "❌ At least one of AVM_ADDRESS, EVM_ADDRESS, KEETA_ADDRESS, SVM_ADDRESS, STELLAR_ADDRESS, or HEDERA_ACCOUNT_ID is required",
   );
   process.exit(1);
 }
@@ -46,6 +56,7 @@ if (!facilitatorUrl) {
 const AVM_NETWORK = "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI=" as const; // Algorand Testnet
 const EVM_NETWORK = "eip155:84532" as const; // Base Sepolia
 const HEDERA_NETWORK = "hedera:testnet" as const; // Hedera Testnet
+const KEETA_NETWORK = KEETA_TESTNET_CAIP2; // Keeta Testnet
 const SVM_NETWORK = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1" as const; // Solana Devnet
 const STELLAR_NETWORK = "stellar:testnet" as const; // Stellar Testnet
 const HEDERA_HBAR_ASSET = "0.0.0" as const; // Native HBAR asset id
@@ -72,6 +83,14 @@ if (evmAddress) {
     price: "$0.001",
     network: EVM_NETWORK,
     payTo: evmAddress,
+  });
+}
+if (keetaAddress) {
+  accepts.push({
+    scheme: "exact",
+    price: "$0.001",
+    network: KEETA_NETWORK,
+    payTo: keetaAddress,
   });
 }
 if (svmAddress) {
@@ -112,6 +131,9 @@ if (avmAddress) {
 }
 if (evmAddress) {
   server.register(EVM_NETWORK, new ExactEvmScheme());
+}
+if (keetaAddress) {
+  server.register(KEETA_NETWORK, new ExactKeetaScheme());
 }
 if (svmAddress) {
   server.register(SVM_NETWORK, new ExactSvmScheme());
@@ -164,6 +186,9 @@ app.listen(port, () => {
   }
   if (evmAddress) {
     console.log(`   EVM: ${evmAddress} on ${EVM_NETWORK}`);
+  }
+  if (keetaAddress) {
+    console.log(`   Keeta: ${keetaAddress} on ${KEETA_NETWORK}`);
   }
   if (svmAddress) {
     console.log(`   SVM: ${svmAddress} on ${SVM_NETWORK}`);
