@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "@aptos-labs/ts-sdk",
     "@aptos-labs/aptos-client",
+    "@keetanetwork/keetanet-client",
+    "@keetanetwork/anchor",
     "got",
     "keyv",
     "cacheable-request",
