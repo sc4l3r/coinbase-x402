@@ -1640,6 +1640,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.6)
+      '@keetanetwork/keetanet-client':
+        specifier: ^0.16.1
+        version: 0.16.2
       '@scure/base':
         specifier: ^1.2.6
         version: 1.2.6
@@ -1667,6 +1670,9 @@ importers:
       '@x402/hedera':
         specifier: workspace:*
         version: link:../packages/mechanisms/hedera
+      '@x402/keeta':
+        specifier: workspace:*
+        version: link:../packages/mechanisms/keeta
       '@x402/next':
         specifier: workspace:*
         version: link:../packages/http/next

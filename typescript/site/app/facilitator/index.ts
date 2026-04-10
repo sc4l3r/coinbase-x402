@@ -1,4 +1,5 @@
 import { Account, Ed25519PrivateKey, PrivateKey, PrivateKeyVariants } from "@aptos-labs/ts-sdk";
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import { toFacilitatorAptosSigner } from "@x402/aptos";
@@ -23,6 +24,8 @@ import {
   toFacilitatorHederaSigner,
 } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/facilitator";
+import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 import { createEd25519Signer } from "@x402/stellar";
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
@@ -159,6 +162,21 @@ async function createFacilitator(): Promise<x402Facilitator> {
     const aptosAccount = Account.fromPrivateKey({ privateKey: aptosPrivateKey });
     const aptosSigner = toFacilitatorAptosSigner(aptosAccount);
     facilitator.register("aptos:2", new ExactAptosScheme(aptosSigner));
+  }
+
+  // Optionally register Keeta if configured
+  if (process.env.FACILITATOR_KEETA_PASSPHRASE) {
+    const keetaAccounts = await Promise.all(
+      process.env.FACILITATOR_KEETA_PASSPHRASE.split(",")
+        .map(p => p.trim())
+        .filter(p => p.length > 0)
+        .map(async p => {
+          const seed = await KeetaNet.lib.Account.seedFromPassphrase(p);
+          return KeetaNet.lib.Account.fromSeed(seed, 0);
+        }),
+    );
+    const keetaSigner = toFacilitatorKeetaSigner(keetaAccounts);
+    facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner));
   }
 
   // Optionally register Stellar if configured
