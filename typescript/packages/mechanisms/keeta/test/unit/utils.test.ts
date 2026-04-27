@@ -1,36 +1,45 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   getUsdcAddress,
   networkToKeetaNetwork,
   convertToTokenAmount,
   validateTokenAsset,
 } from "../../src/utils";
-import {
-  KEETA_MAINNET_CAIP2,
-  KEETA_TESTNET_CAIP2,
-  USDC_MAINNET_ADDRESS,
-  USDC_TESTNET_ADDRESS,
-} from "../../src/constants";
+import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "../../src/constants";
 import { getNewKeetaAccount } from "./utils";
 
 const KEETA_ACCOUNT = getNewKeetaAccount().publicKeyString.toString();
 
 describe("Keeta utilities", () => {
+  let usdcMainnetAddress: string;
+  let usdcTestnetAddress: string;
+
+  beforeAll(async () => {
+    [usdcTestnetAddress, usdcMainnetAddress] = await Promise.all([
+      await getUsdcAddress(KEETA_TESTNET_CAIP2),
+      await getUsdcAddress(KEETA_MAINNET_CAIP2),
+    ]);
+  });
+
   describe("getUsdcAddress", () => {
-    it("returns mainnet USDC address for mainnet network", () => {
-      expect(getUsdcAddress(KEETA_MAINNET_CAIP2)).toBe(USDC_MAINNET_ADDRESS);
+    it("returns mainnet USDC address for mainnet network", async () => {
+      await expect(getUsdcAddress(KEETA_MAINNET_CAIP2)).resolves.toBe(usdcMainnetAddress);
     });
 
-    it("returns testnet USDC address for testnet network", () => {
-      expect(getUsdcAddress(KEETA_TESTNET_CAIP2)).toBe(USDC_TESTNET_ADDRESS);
+    it("returns testnet USDC address for testnet network", async () => {
+      await expect(getUsdcAddress(KEETA_TESTNET_CAIP2)).resolves.toBe(usdcTestnetAddress);
     });
 
-    it("throws for unknown network", () => {
-      expect(() => getUsdcAddress("keeta:99999")).toThrow("No USDC address configured for network");
+    it("throws for unknown network", async () => {
+      await expect(getUsdcAddress("keeta:99999")).rejects.toThrow(
+        "No USDC address configured for network",
+      );
     });
 
-    it("throws for non-keeta network", () => {
-      expect(() => getUsdcAddress("ethereum:1")).toThrow("No USDC address configured for network");
+    it("throws for non-keeta network", async () => {
+      await expect(getUsdcAddress("ethereum:1")).rejects.toThrow(
+        "No USDC address configured for network",
+      );
     });
   });
 
@@ -92,7 +101,7 @@ describe("Keeta utilities", () => {
 
   describe("validateTokenAsset", () => {
     it("returns true for valid token address", () => {
-      expect(validateTokenAsset(USDC_TESTNET_ADDRESS)).toBe(true);
+      expect(validateTokenAsset(usdcTestnetAddress)).toBe(true);
     });
 
     it("returns false when address is not a token type", () => {

@@ -176,7 +176,7 @@ async function createFacilitator(): Promise<x402Facilitator> {
         }),
     );
     const keetaSigner = toFacilitatorKeetaSigner(keetaAccounts);
-    facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner));
+    facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner, console));
   }
 
   // Optionally register Stellar if configured

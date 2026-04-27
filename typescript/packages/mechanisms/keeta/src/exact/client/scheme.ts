@@ -30,10 +30,9 @@ export class ExactKeetaScheme implements SchemeNetworkClient {
     const amount = BigInt(paymentRequirements.amount);
     const recipient = KeetaNet.lib.Account.fromPublicKeyString(paymentRequirements.payTo);
 
-    const token = KeetaNet.lib.Account.fromPublicKeyString(paymentRequirements.asset);
-    if (!token.isToken()) {
-      throw new Error("Invalid token");
-    }
+    const token = KeetaNet.lib.Account.fromPublicKeyString(paymentRequirements.asset).assertKeyType(
+      KeetaNet.lib.Account.AccountKeyAlgorithm.TOKEN,
+    );
 
     let external: string | undefined;
     if (typeof paymentRequirements.extra?.external === "string") {

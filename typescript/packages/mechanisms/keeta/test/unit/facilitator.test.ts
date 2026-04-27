@@ -1,17 +1,13 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
-import { ExactKeetaScheme } from "../../src/exact/facilitator/scheme";
-import {
-  KTA_TESTNET_ADDRESS,
-  USDC_TESTNET_ADDRESS,
-  KEETA_MAINNET_CAIP2,
-  KEETA_TESTNET_CAIP2,
-} from "../../src/constants";
-import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
-import type { ExactKeetaPayload } from "../../src/types";
-import { BlockOperations } from "@keetanetwork/keetanet-client/lib/block/operations";
 import { KeyPairKeyAlgorithm } from "@keetanetwork/keetanet-client/lib/account";
+import { BlockOperations } from "@keetanetwork/keetanet-client/lib/block/operations";
+import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import { getNewKeetaAccount } from "./utils";
+import { ExactKeetaScheme } from "../../src/exact/facilitator/scheme";
+import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "../../src/constants";
+import type { ExactKeetaPayload } from "../../src/types";
+import { getUsdcAddress, KTA_TESTNET_ADDRESS } from "../../src/utils";
 
 const TESTNET_NETWORK_ID = BigInt(KEETA_TESTNET_CAIP2.split(":")[1]);
 const MAINNET_NETWORK_ID = BigInt(KEETA_MAINNET_CAIP2.split(":")[1]);
@@ -20,7 +16,6 @@ const EXTERNAL = "ext-ref-abc123";
 const FEE_PAYER_1 = getNewKeetaAccount().publicKeyString.toString();
 const FEE_PAYER_2 = getNewKeetaAccount().publicKeyString.toString();
 const KTA_TESTNET_TOKEN = KeetaNet.lib.Account.fromPublicKeyString(KTA_TESTNET_ADDRESS);
-const USDC_TESTNET_TOKEN = KeetaNet.lib.Account.fromPublicKeyString(USDC_TESTNET_ADDRESS);
 
 /**
  * Build and seal a signed block.
@@ -52,6 +47,7 @@ describe("ExactKeetaFacilitator", () => {
   let payerAccount: InstanceType<typeof KeetaNet.lib.Account<KeyPairKeyAlgorithm>>;
   let recipientAddress: string;
   let payerOpeningHashHex: string;
+  let usdcTestnetAddress: string;
 
   // Different encoded blocks for specific test scenarios
   let sendOp: InstanceType<typeof KeetaNet.lib.Block.Operation.SEND>;
@@ -118,6 +114,8 @@ describe("ExactKeetaFacilitator", () => {
 
     const recipientAccount = getNewKeetaAccount();
     recipientAddress = recipientAccount.publicKeyString.toString();
+
+    usdcTestnetAddress = await getUsdcAddress(KEETA_TESTNET_CAIP2);
 
     delegateAccount = getNewKeetaAccount();
 
@@ -373,10 +371,12 @@ describe("ExactKeetaFacilitator", () => {
 
   describe("verify - token/asset check", () => {
     it("rejects when requirements.asset does not match the block token", async () => {
+      const usdcAddress = await getUsdcAddress(KEETA_TESTNET_CAIP2);
+
       // Block pays KTA_TESTNET_ADDRESS; requirements ask for USDC_TESTNET_ADDRESS
       const result = await facilitator.verify(
         createValidPayload(),
-        createValidRequirements({ asset: USDC_TESTNET_ADDRESS }),
+        createValidRequirements({ asset: usdcAddress }),
       );
 
       expect(result.isValid).toBe(false);
@@ -485,7 +485,7 @@ describe("ExactKeetaFacilitator", () => {
         balances: [
           {
             // different token
-            token: USDC_TESTNET_TOKEN,
+            token: KeetaNet.lib.Account.fromPublicKeyString(usdcTestnetAddress),
             balance: BigInt(AMOUNT) * 10n,
           },
         ],

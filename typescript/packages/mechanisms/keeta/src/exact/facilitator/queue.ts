@@ -9,6 +9,7 @@ import {
 import type { JSONSerializable } from "@keetanetwork/keetanet-client/lib/utils/conversion";
 import type { Network } from "@x402/core/types";
 import type { FacilitatorKeetaSigner } from "../../signer";
+import { Logger } from "@keetanetwork/keetanet-client/lib/log";
 
 type SettlementRequest = {
   feePayer: string;
@@ -104,17 +105,20 @@ export class SettlementQueue {
   private readonly runners = new Map<string, Promise<RunnerEntry>>();
   private readonly pendingPromises = new Map<KeetaAnchorQueueRequestID, PendingSettlement>();
   private readonly storage = new KeetaAnchorQueueStorageDriverMemory();
+  private readonly logger: Logger | undefined;
 
   /**
    * Creates a new SettlementQueue instance.
    * A queue runner is eagerly created for every fee payer address reported by the signer.
    *
    * @param signer - The Keeta client for facilitator operations
+   * @param logger - Optional logger
    */
-  constructor(signer: FacilitatorKeetaSigner) {
+  constructor(signer: FacilitatorKeetaSigner, logger?: Logger) {
     for (const address of signer.getAddresses()) {
       this.runners.set(address, this.createRunner(address, signer));
     }
+    this.logger = logger;
   }
 
   /**
@@ -221,7 +225,7 @@ export class SettlementQueue {
           // continue draining
         }
       } catch (err) {
-        console.error("Settlement queue drain error:", err);
+        this.logger?.error("Settlement queue drain error:", err);
       } finally {
         entry.isRunning = false;
       }

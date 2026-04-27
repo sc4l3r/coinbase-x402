@@ -22,12 +22,8 @@ import { ExactKeetaScheme as ExactKeetaFacilitator } from "../../src/exact/facil
 import { ExactKeetaScheme as ExactKeetaServer } from "../../src/exact/server/scheme";
 import { toClientKeetaSigner, toFacilitatorKeetaSigner } from "../../src/signer";
 import type { ExactKeetaPayload } from "../../src/types";
-import {
-  KEETA_TESTNET_CAIP2,
-  KTA_TESTNET_ADDRESS,
-  USDC_MAINNET_ADDRESS,
-  USDC_TESTNET_ADDRESS,
-} from "../../src/constants";
+import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "../../src/constants";
+import { getUsdcAddress, KTA_TESTNET_ADDRESS } from "../../src/utils";
 
 // Load passphrases from environment (all optional, ephemeral accounts are generated if absent)
 const CLIENT_PASSPHRASE = process.env.KEETA_CLIENT_PASSPHRASE;
@@ -128,13 +124,14 @@ class KeetaFacilitatorClient implements FacilitatorClient {
  */
 function buildKeetaPaymentRequirements(
   payTo: string,
+  asset: string,
   amount: string,
   network: Network = KEETA_TESTNET_CAIP2,
 ): PaymentRequirements {
   return {
     scheme: "exact",
     network,
-    asset: KTA_TESTNET_ADDRESS,
+    asset: asset,
     amount,
     payTo,
     maxTimeoutSeconds: 60,
@@ -146,6 +143,8 @@ describe("Keeta Integration Tests", () => {
   let clientAccount: InstanceType<typeof KeetaNet.lib.Account>;
   let facilitatorAccount: InstanceType<typeof KeetaNet.lib.Account>;
   let serverAddress: string;
+  let usdcTestnetAddress: string;
+  let usdcMainnetAddress: string;
 
   beforeAll(async () => {
     // Create client account: use passphrase if provided, otherwise generate a fresh ephemeral account
@@ -176,6 +175,11 @@ describe("Keeta Integration Tests", () => {
     await Promise.all([
       ensureAccountFunded(clientAccount.publicKeyString.toString()),
       ensureAccountFunded(facilitatorAccount.publicKeyString.toString()),
+    ]);
+
+    [usdcTestnetAddress, usdcMainnetAddress] = await Promise.all([
+      await getUsdcAddress(KEETA_TESTNET_CAIP2),
+      await getUsdcAddress(KEETA_MAINNET_CAIP2),
     ]);
   }, 60000); // Allow up to 60s for faucet funding to confirm
 
@@ -208,7 +212,9 @@ describe("Keeta Integration Tests", () => {
     });
 
     it("server should successfully verify a Keeta payment from a client", async () => {
-      const accepts = [buildKeetaPaymentRequirements(serverAddress, PAYMENT_AMOUNT)];
+      const accepts = [
+        buildKeetaPaymentRequirements(serverAddress, KTA_TESTNET_ADDRESS, PAYMENT_AMOUNT),
+      ];
       const resource = {
         url: "https://example.com/api",
         description: "Test protected resource",
@@ -248,7 +254,9 @@ describe("Keeta Integration Tests", () => {
     });
 
     it("facilitator should settle a valid Keeta payment and return block hash", async () => {
-      const accepts = [buildKeetaPaymentRequirements(serverAddress, PAYMENT_AMOUNT)];
+      const accepts = [
+        buildKeetaPaymentRequirements(serverAddress, KTA_TESTNET_ADDRESS, PAYMENT_AMOUNT),
+      ];
       const resource = {
         url: "https://example.com/api",
         description: "Test protected resource",
@@ -278,12 +286,14 @@ describe("Keeta Integration Tests", () => {
       const result = await server.parsePrice("$1.00", KEETA_TESTNET_CAIP2);
 
       expect(result.amount).toBe("1000000");
-      expect(result.asset).toBe(USDC_TESTNET_ADDRESS);
+      expect(result.asset).toBe(usdcTestnetAddress);
     });
 
     it("client should fail to verify a payment with wrong amount", async () => {
       // Build requirements requesting more than what client pays
-      const wrongAmountRequirements = [buildKeetaPaymentRequirements(serverAddress, "9999999999")];
+      const wrongAmountRequirements = [
+        buildKeetaPaymentRequirements(serverAddress, KTA_TESTNET_ADDRESS, "9999999999"),
+      ];
       const resource = {
         url: "https://example.com/api",
         description: "Test resource",
@@ -316,7 +326,9 @@ describe("Keeta Integration Tests", () => {
     });
 
     it("facilitator should reject a payment with a mismatched payTo address", async () => {
-      const accepts = [buildKeetaPaymentRequirements(serverAddress, PAYMENT_AMOUNT)];
+      const accepts = [
+        buildKeetaPaymentRequirements(serverAddress, KTA_TESTNET_ADDRESS, PAYMENT_AMOUNT),
+      ];
       const resource = {
         url: "https://example.com/api",
         description: "Test resource",
@@ -484,14 +496,14 @@ describe("Keeta Integration Tests", () => {
 
         expect(requirements).toHaveLength(1);
         expect(requirements[0].amount).toBe(testCase.expectedAmount);
-        expect(requirements[0].asset).toBe(USDC_TESTNET_ADDRESS);
+        expect(requirements[0].asset).toBe(usdcTestnetAddress);
       }
     });
 
     it("should handle AssetAmount pass-through", async () => {
       const customAsset = {
         amount: "5000000",
-        asset: USDC_TESTNET_ADDRESS,
+        asset: usdcTestnetAddress,
         extra: { external: "abc123" },
       };
 
@@ -504,13 +516,13 @@ describe("Keeta Integration Tests", () => {
 
       expect(requirements).toHaveLength(1);
       expect(requirements[0].amount).toBe("5000000");
-      expect(requirements[0].asset).toBe(USDC_TESTNET_ADDRESS);
+      expect(requirements[0].asset).toBe(usdcTestnetAddress);
       expect(requirements[0].extra?.external).toBe("abc123");
     });
 
     it("should use registerMoneyParser for custom conversion", async () => {
       // Use mainnet USDC as stand-in (doesn't exist on testnet)
-      const CUSTOM_TOKEN = USDC_MAINNET_ADDRESS;
+      const CUSTOM_TOKEN = usdcMainnetAddress;
       keetaServer.registerMoneyParser(async (amount, _network) => {
         if (amount > 100) {
           return {
@@ -545,12 +557,12 @@ describe("Keeta Integration Tests", () => {
       });
 
       expect(smallRequirements[0].amount).toBe("50000000");
-      expect(smallRequirements[0].asset).toBe(USDC_TESTNET_ADDRESS);
+      expect(smallRequirements[0].asset).toBe(usdcTestnetAddress);
     });
 
     it("should support multiple MoneyParsers chained", async () => {
-      const TOKEN_A = USDC_MAINNET_ADDRESS;
-      const TOKEN_B = USDC_TESTNET_ADDRESS;
+      const TOKEN_A = usdcMainnetAddress;
+      const TOKEN_B = usdcTestnetAddress;
 
       keetaServer
         .registerMoneyParser(async amount => {
@@ -599,7 +611,7 @@ describe("Keeta Integration Tests", () => {
         price: 50,
         network: KEETA_TESTNET_CAIP2,
       });
-      expect(standardReq[0].asset).toBe(USDC_TESTNET_ADDRESS);
+      expect(standardReq[0].asset).toBe(usdcTestnetAddress);
     });
 
     it("should avoid floating-point rounding errors", async () => {
@@ -619,7 +631,7 @@ describe("Keeta Integration Tests", () => {
 
         expect(requirements).toHaveLength(1);
         expect(requirements[0].amount).toBe(testCase.expectedAmount);
-        expect(requirements[0].asset).toBe(USDC_TESTNET_ADDRESS);
+        expect(requirements[0].asset).toBe(usdcTestnetAddress);
       }
     });
   });
