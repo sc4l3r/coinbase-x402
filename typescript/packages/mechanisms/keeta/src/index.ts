@@ -17,4 +17,9 @@ export type { ExactKeetaPayload } from "./types";
 export * from "./constants";
 
 // Export utilities
-export { getUsdcAddress, networkToKeetaNetwork } from "./utils";
+export {
+  getUsdcAddress,
+  networkToKeetaNetwork,
+  KTA_MAINNET_ADDRESS,
+  KTA_TESTNET_ADDRESS,
+} from "./utils";

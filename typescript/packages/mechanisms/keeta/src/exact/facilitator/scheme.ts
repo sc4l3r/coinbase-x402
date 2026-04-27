@@ -1,4 +1,5 @@
 import * as KeetaNet from "@keetanetwork/keetanet-client";
+import { Logger } from "@keetanetwork/keetanet-client/lib/log";
 import type {
   PaymentPayload,
   PaymentRequirements,
@@ -18,20 +19,18 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
   readonly scheme = "exact";
   readonly caipFamily = "keeta:*";
 
-  private readonly queue: SettlementQueue;
-
   /**
    * Creates a new ExactKeetaScheme instance.
    *
    * @param signer - The Keeta client for facilitator operations
+   * @param logger - Optional logger to use. If unset, logging is disabled.
    * @param queue - Optional queue to use for settlement requests. If unset, defaults to an in-memory implementation.
    */
   constructor(
     private readonly signer: FacilitatorKeetaSigner,
-    queue?: SettlementQueue,
-  ) {
-    this.queue = queue ?? new SettlementQueue(signer);
-  }
+    private readonly logger?: Logger,
+    private readonly queue: SettlementQueue = new SettlementQueue(signer, logger),
+  ) {}
 
   /**
    * Get mechanism-specific extra data for the supported kinds endpoint.
@@ -46,7 +45,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
   /**
    * Get signer addresses used by this facilitator.
    *
-   * @param _ - The network identifier (unused for Keeta)
+   * @param _ - The network identifier (unused for Keeta since signers work on all networks)
    * @returns Array of fee payer addresses
    */
   getSigners(_: string): string[] {
@@ -91,7 +90,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
     try {
       block = new KeetaNet.lib.Block(exactKeetaPayload.block);
     } catch (error) {
-      console.error("Error decoding block:", error);
+      this.logger?.error("Error decoding block:", error);
 
       return {
         isValid: false,
@@ -181,7 +180,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
         payer: valid.payer,
       };
     } catch (error) {
-      console.error("Failed to settle transaction:", error);
+      this.logger?.error("Failed to settle transaction:", error);
       return {
         success: false,
         errorReason: "transaction_failed",
@@ -258,7 +257,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
         };
       }
     } catch (error) {
-      console.error("Error parsing payment amount:", error);
+      this.logger?.error("Error parsing payment amount:", error);
 
       return {
         isValid: false,
@@ -311,7 +310,9 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
 
     const [accountInfo, permissions] = await Promise.all([
       client.getAccountInfo(block.account),
-      client.listACLsByPrincipal(signer, [block.account]),
+      block.account.comparePublicKey(signer)
+        ? null
+        : client.listACLsByPrincipal(signer, [block.account]),
     ]);
 
     // 4.5.1 Sufficient balance
@@ -344,7 +345,7 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
     // If the block's account is equal to the signer permission is given.
     // Otherwise, check if the signer is allowed to send on behalf of the account.
     if (!block.account.comparePublicKey(signer)) {
-      const permission = permissions.find(permission =>
+      const permission = permissions?.find(permission =>
         permission.entity.comparePublicKey(block.account),
       );
 

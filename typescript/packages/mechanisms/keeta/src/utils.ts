@@ -1,11 +1,28 @@
 import type { Network } from "@x402/core/types";
+import { getDefaultResolver } from "@keetanetwork/anchor/config.js";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
-import {
-  KEETA_MAINNET_CAIP2,
-  KEETA_TESTNET_CAIP2,
-  USDC_MAINNET_ADDRESS,
-  USDC_TESTNET_ADDRESS,
-} from "./constants";
+import { TokenPublicKeyString } from "@keetanetwork/keetanet-client/lib/account";
+import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "./constants";
+
+/**
+ * Get the KTA token address for a network
+ *
+ * @param network - Network identifier (CAIP-2 format)
+ * @returns KTA token address for the network
+ */
+export function getKTAAddress(network: Network): TokenPublicKeyString {
+  const keetaNetwork = networkToKeetaNetwork(network);
+  const { baseToken } = KeetaNet.lib.Account.generateBaseAddresses(
+    KeetaNet.Client.Config.NetworkIDs[keetaNetwork],
+  );
+  return baseToken.publicKeyString.toString();
+}
+
+/**
+ * KTA token addresses
+ */
+export const KTA_MAINNET_ADDRESS = getKTAAddress(KEETA_MAINNET_CAIP2);
+export const KTA_TESTNET_ADDRESS = getKTAAddress(KEETA_TESTNET_CAIP2);
 
 /**
  * Get the default USDC token address for a network
@@ -13,15 +30,26 @@ import {
  * @param network - Network identifier (CAIP-2 format)
  * @returns USDC token address for the network
  */
-export function getUsdcAddress(network: Network): string {
-  switch (network) {
-    case KEETA_MAINNET_CAIP2:
-      return USDC_MAINNET_ADDRESS;
-    case KEETA_TESTNET_CAIP2:
-      return USDC_TESTNET_ADDRESS;
-    default:
-      throw new Error(`No USDC address configured for network: ${network}`);
+export async function getUsdcAddress(network: Network): Promise<string> {
+  let keetaNetwork;
+  try {
+    keetaNetwork = networkToKeetaNetwork(network);
+  } catch {
+    throw new Error(`No USDC address configured for network: ${network}`);
   }
+
+  const client = KeetaNet.UserClient.fromNetwork(keetaNetwork, null);
+
+  const resolver = getDefaultResolver(client);
+  const usdc = await resolver.lookupToken("$USDC");
+
+  await client.destroy();
+
+  if (!usdc) {
+    throw new Error(`$USDC not found for network: ${network}`);
+  }
+
+  return usdc.token;
 }
 
 /**
