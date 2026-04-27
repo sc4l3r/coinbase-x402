@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { SettlementQueue } from "../../src/exact/facilitator/queue";
 import type { FacilitatorKeetaSigner } from "../../src/signer";
-import { KTA_TESTNET_ADDRESS, KEETA_TESTNET_CAIP2 } from "../../src/constants";
+import { KEETA_TESTNET_CAIP2 } from "../../src/constants";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { KeyPairKeyAlgorithm } from "@keetanetwork/keetanet-client/lib/account";
 import type { Network } from "@x402/core/types";
 import { getNewKeetaAccount } from "./utils";
+import { KTA_TESTNET_ADDRESS } from "../../src/utils";
 
 const PAYER_ACCOUNT = getNewKeetaAccount();
 const RECIPIENT_ACCOUNT = getNewKeetaAccount();

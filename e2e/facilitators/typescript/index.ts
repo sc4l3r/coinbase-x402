@@ -456,7 +456,7 @@ if (process.env.KEETA_FACILITATOR_PASSPHRASE) {
   );
   console.info(`Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`);
   const keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
-  facilitator.register(KEETA_NETWORK as Network, new ExactKeetaScheme(keetaSigner));
+  facilitator.register(KEETA_NETWORK as Network, new ExactKeetaScheme(keetaSigner, console));
 }
 if (stellarSigner) {
   facilitator.register(

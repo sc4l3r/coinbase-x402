@@ -58,10 +58,8 @@ This package provides three main components for handling x402 payments on Keeta:
 
 - `KEETA_MAINNET_CAIP2` = `"keeta:21378"`
 - `KEETA_TESTNET_CAIP2` = `"keeta:1413829460"`
-- `USDC_MAINNET_ADDRESS` - USDC token on mainnet
-- `USDC_TESTNET_ADDRESS` - USDC token on testnet
-- `KTA_MAINNET_ADDRESS` - KTA token on mainnet
-- `KTA_TESTNET_ADDRESS` - KTA token on testnet
+- `KTA_MAINNET_ADDRESS` = Base token address for mainnet
+- `KTA_TESTNET_ADDRESS` = Base token address for testnet
 
 ## Usage
 
@@ -98,7 +96,8 @@ const account = KeetaNet.lib.Account.fromSeed(
 const signer = toFacilitatorKeetaSigner([account]);
 
 const facilitator = new x402Facilitator();
-facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(signer));
+// Register Keeta faciliator with console logger
+facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(signer, console));
 ```
 
 ### Server

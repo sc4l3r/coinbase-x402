@@ -184,7 +184,10 @@ if (keetaPassphrase) {
 
   const keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
 
-  facilitator.register(KEETA_NETWORK, new ExactKeetaScheme(keetaSigner));
+  facilitator.register(
+    KEETA_NETWORK,
+    new ExactKeetaScheme(keetaSigner, console),
+  );
 }
 
 // Register SVM scheme if private key is provided

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
-import { KeetaUserClientCache } from "../../src/utils";
+import { KeetaUserClientCache, KTA_TESTNET_ADDRESS } from "../../src/utils";
 import { toClientKeetaSigner, toFacilitatorKeetaSigner } from "../../src/signer";
-import { KEETA_TESTNET_CAIP2, KEETA_MAINNET_CAIP2, KTA_TESTNET_ADDRESS } from "../../src/constants";
+import { KEETA_TESTNET_CAIP2, KEETA_MAINNET_CAIP2 } from "../../src/constants";
 import { AccountKeyAlgorithm } from "@keetanetwork/keetanet-client/lib/account";
 import { getNewKeetaAccount } from "./utils";
 

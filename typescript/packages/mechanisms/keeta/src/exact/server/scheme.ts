@@ -1,6 +1,5 @@
 import type {
   AssetAmount,
-  Money,
   MoneyParser,
   Network,
   PaymentRequirements,
@@ -15,6 +14,7 @@ import { convertToTokenAmount, getUsdcAddress, validateTokenAsset } from "../../
 export class ExactKeetaScheme implements SchemeNetworkServer {
   readonly scheme = "exact";
   private moneyParsers: MoneyParser[] = [];
+  private usdcAddressCache: Map<Network, string> = new Map();
 
   /**
    * Register a custom money parser in the parser chain.
@@ -47,7 +47,7 @@ export class ExactKeetaScheme implements SchemeNetworkServer {
       return { amount: price.amount, asset: price.asset, extra: price.extra || {} };
     }
 
-    const amount = this.parseMoneyToDecimal(price as Money);
+    const amount = this.parseMoneyToDecimal(price);
 
     for (const parser of this.moneyParsers) {
       const result = await parser(amount, network);
@@ -120,13 +120,21 @@ export class ExactKeetaScheme implements SchemeNetworkServer {
    * @param network - The network to use
    * @returns The parsed asset amount in USDC
    */
-  private defaultMoneyConversion(amount: number, network: Network): AssetAmount {
+  private async defaultMoneyConversion(amount: number, network: Network): Promise<AssetAmount> {
     // Convert decimal amount to token amount (USDC has 6 decimals)
     const tokenAmount = convertToTokenAmount(amount.toString(), 6);
 
+    // Cache USDC address for the server's lifetime since it's not
+    // really expected to change. If it changes, the server must be restarted.
+    let usdcAddress = this.usdcAddressCache.get(network);
+    if (!usdcAddress) {
+      usdcAddress = await getUsdcAddress(network);
+      this.usdcAddressCache.set(network, usdcAddress);
+    }
+
     return {
       amount: tokenAmount,
-      asset: getUsdcAddress(network),
+      asset: usdcAddress,
       extra: {},
     };
   }
