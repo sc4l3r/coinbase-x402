@@ -262,6 +262,27 @@ describe("ExactKeetaFacilitator", () => {
     });
   });
 
+  describe("verify - requirements.network format", () => {
+    it.each<[string, string, string]>([
+      ["no colon separator", "keetaX123", "invalid_exact_keeta_requirements_network_malformed"],
+      [
+        "more than one colon",
+        "keeta:1:extra",
+        "invalid_exact_keeta_requirements_network_malformed",
+      ],
+      ["non-integer network ID", "keeta:notanumber", "invalid_exact_keeta_requirements_network_id"],
+      ["decimal (non-integer) ID", "keeta:3.14", "invalid_exact_keeta_requirements_network_id"],
+    ])("rejects when requirements.network has %s", async (_label, network, invalidReason) => {
+      const result = await facilitator.verify(
+        createValidPayload(),
+        createValidRequirements({ network: network as `${string}:${string}` }),
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.invalidReason).toBe(invalidReason);
+    });
+  });
+
   describe("verify - network check (payload vs requirements)", () => {
     it("rejects when payload.accepted.network does not match requirements.network", async () => {
       const payload = createValidPayload();

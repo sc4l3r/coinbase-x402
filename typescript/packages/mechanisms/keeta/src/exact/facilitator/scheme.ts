@@ -79,6 +79,28 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
       return { isValid: false, invalidReason: "unsupported_scheme", payer: "" };
     }
 
+    // Parse network to use networkName and networkId later on.
+    const caip = requirements.network.split(":");
+    if (caip.length !== 2) {
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_keeta_requirements_network_malformed",
+      };
+    }
+
+    let networkName = caip[0];
+    let networkId: bigint | undefined;
+    try {
+      networkId = BigInt(caip[1]);
+    } catch (error) {
+      this.logger?.error("Error decoding requirements.network CAIP:", error);
+
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_keeta_requirements_network_id",
+      };
+    }
+
     // 3. Verify the network matches
     if (payload.accepted.network !== requirements.network) {
       return { isValid: false, invalidReason: "network_mismatch", payer: "" };
@@ -99,11 +121,8 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
       };
     }
 
-    const caip = requirements.network.split(":");
-    const networkId = BigInt(caip[1]);
-
     // 4.2 Verify the network id matches
-    if (block.network !== networkId) {
+    if (networkName !== "keeta" || block.network !== networkId) {
       return { isValid: false, invalidReason: "network_mismatch", payer: "" };
     }
 
@@ -121,6 +140,16 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
     const payOperationVerificationResult = this.verifyPaymentOperation(payOperation, requirements);
     if (payOperationVerificationResult !== null) {
       return payOperationVerificationResult;
+    }
+
+    // Ensure that the sponsor can't be tricked into moving its own funds
+    const facilitatorAddresses = this.signer.getAddresses();
+    if (facilitatorAddresses.includes(block.account.publicKeyString.toString())) {
+      return {
+        isValid: false,
+        invalidReason: "invalid_exact_keeta_payload_payer_is_facilitator",
+        payer: "",
+      };
     }
 
     // 4.5 Simulate transaction
