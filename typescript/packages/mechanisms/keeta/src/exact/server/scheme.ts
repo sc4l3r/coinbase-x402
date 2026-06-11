@@ -6,7 +6,8 @@ import type {
   Price,
   SchemeNetworkServer,
 } from "@x402/core/types";
-import { convertToTokenAmount, getUsdcAddress, validateTokenAsset } from "../../utils";
+import { convertToTokenAmount, numberToDecimalString, parseMoneyString } from "@x402/core/utils";
+import { getUsdcAddress, validateTokenAsset } from "../../utils";
 
 /**
  * Keeta server implementation for the Exact payment scheme.
@@ -97,19 +98,8 @@ export class ExactKeetaScheme implements SchemeNetworkServer {
    * @returns Decimal number
    */
   private parseMoneyToDecimal(money: string | number): number {
-    if (typeof money === "number") {
-      return money;
-    }
-
-    // Remove $ sign and whitespace, then parse
-    const cleanMoney = money.replace(/^\$/, "").trim();
-    const amount = parseFloat(cleanMoney);
-
-    if (isNaN(amount)) {
-      throw new Error(`Invalid money format: ${money}`);
-    }
-
-    return amount;
+    let decimalString = typeof money === "number" ? numberToDecimalString(money) : money;
+    return parseMoneyString(decimalString);
   }
 
   /**

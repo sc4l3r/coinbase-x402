@@ -1,10 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import {
-  getUsdcAddress,
-  networkToKeetaNetwork,
-  convertToTokenAmount,
-  validateTokenAsset,
-} from "../../src/utils";
+import { getUsdcAddress, networkToKeetaNetwork, validateTokenAsset } from "../../src/utils";
 import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "../../src/constants";
 import { getNewKeetaAccount } from "./utils";
 
@@ -58,44 +53,6 @@ describe("Keeta utilities", () => {
 
     it("throws for non-keeta network", () => {
       expect(() => networkToKeetaNetwork("ethereum:1")).toThrow("Unsupported network");
-    });
-  });
-
-  describe("convertToTokenAmount", () => {
-    it("converts 1 USDC to 1000000 atomic units (6 decimals)", () => {
-      expect(convertToTokenAmount("1", 6)).toBe("1000000");
-    });
-
-    it("converts 1.0 to 1000000", () => {
-      expect(convertToTokenAmount("1.0", 6)).toBe("1000000");
-    });
-
-    it("converts 0.10 to 100000", () => {
-      expect(convertToTokenAmount("0.10", 6)).toBe("100000");
-    });
-
-    it("converts 0.000001 to 1 (minimum unit)", () => {
-      expect(convertToTokenAmount("0.000001", 6)).toBe("1");
-    });
-
-    it("truncates extra decimal places beyond precision", () => {
-      expect(convertToTokenAmount("1.1234567", 6)).toBe("1123456");
-    });
-
-    it("converts whole number without decimals", () => {
-      expect(convertToTokenAmount("100", 6)).toBe("100000000");
-    });
-
-    it("handles zero amount", () => {
-      expect(convertToTokenAmount("0", 6)).toBe("0");
-    });
-
-    it("works with different decimal precision", () => {
-      expect(convertToTokenAmount("1.5", 2)).toBe("150");
-    });
-
-    it("throws for invalid amount string", () => {
-      expect(() => convertToTokenAmount("invalid", 6)).toThrow("Invalid amount");
     });
   });
 
