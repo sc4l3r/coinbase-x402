@@ -36,6 +36,7 @@ export class GenericClientProxy extends BaseProxy implements ClientProxy {
         SVM_RPC_URL: config.svmRpcUrl,
         HEDERA_NETWORK: config.hederaNetwork,
         HEDERA_NODE_URL: config.hederaNodeUrl,
+        KEETA_NETWORK: config.keetaNetwork,
         TVM_NETWORK: config.tvmNetwork,
         TVM_PROVIDER: process.env.TVM_PROVIDER || '',
         TONCENTER_BASE_URL: process.env.TONCENTER_BASE_URL || config.tvmRpcUrl,

@@ -60,7 +60,8 @@ const NETWORK_SETS: Record<NetworkMode, NetworkSet> = {
     keeta: {
       name: 'Keeta Testnet',
       caip2: 'keeta:1413829460',
-      rpcUrl: process.env.KEETA_TESTNET_RPC_URL || 'https://test.network.keeta.com',
+      // Unused in Keeta, representative API endpoints are set in the SDK itself
+      rpcUrl: '',
     },
     stellar: {
       name: 'Stellar Testnet',
@@ -103,7 +104,8 @@ const NETWORK_SETS: Record<NetworkMode, NetworkSet> = {
     keeta: {
       name: 'Keeta',
       caip2: 'keeta:21378',
-      rpcUrl: process.env.KEETA_RPC_URL || 'https://network.keeta.com',
+      // Unused in Keeta, representative API endpoints are set in the SDK itself
+      rpcUrl: '',
     },
     stellar: {
       name: 'Stellar Pubnet',

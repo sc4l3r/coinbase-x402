@@ -1202,6 +1202,7 @@ async function runTest() {
       svmRpcUrl: networks.svm.rpcUrl,
       hederaNetwork: networks.hedera.caip2,
       hederaNodeUrl: networks.hedera.rpcUrl,
+      keetaNetwork: networks.keeta.caip2,
       tvmNetwork: networks.tvm.caip2,
       tvmRpcUrl: networks.tvm.rpcUrl,
     };

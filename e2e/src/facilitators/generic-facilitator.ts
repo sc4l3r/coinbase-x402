@@ -138,6 +138,7 @@ export class GenericFacilitatorProxy extends BaseProxy implements FacilitatorPro
       APTOS_RPC_URL: config.networks.aptos.rpcUrl,
       HEDERA_NETWORK: config.networks.hedera.caip2,
       HEDERA_NODE_URL: config.networks.hedera.rpcUrl,
+      KEETA_NETWORK: config.networks.keeta.caip2,
       STELLAR_NETWORK: config.networks.stellar.caip2,
       STELLAR_RPC_URL: config.networks.stellar.rpcUrl,
       TVM_NETWORK: config.networks.tvm.caip2,

@@ -168,7 +168,7 @@
       "description": "Protected endpoint requiring payment on Keeta network",
       "requiresPayment": true,
       "protocolFamily": "keeta"
-    }
+    },
     {
       "path": "/exact/stellar",
       "method": "GET",

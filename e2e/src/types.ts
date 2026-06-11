@@ -91,6 +91,7 @@ export interface ClientConfig {
   svmRpcUrl: string;
   hederaNetwork: string;
   hederaNodeUrl: string;
+  keetaNetwork: string;
   tvmNetwork: string;
   tvmRpcUrl: string;
   batchSettlement?: BatchSettlementClientConfig;

@@ -60,7 +60,7 @@ import {
   createEd25519Signer,
   type FacilitatorStellarSigner,
 } from "@x402/stellar";
-import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2, FacilitatorKeetaSigner } from "@x402/keeta";
 import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 import { ExactStellarScheme } from "@x402/stellar/exact/facilitator";
 import {
@@ -222,6 +222,16 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
     preflightTransfer: createHederaPreflightTransfer(buildHederaClient),
   });
   console.info(`Hedera Facilitator account: ${hederaAccountId}`);
+}
+
+let keetaSigner: FacilitatorKeetaSigner | undefined;
+if (process.env.KEETA_FACILITATOR_PASSPHRASE) {
+  const keetaAccount = KeetaNet.lib.Account.fromSeed(
+    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_FACILITATOR_PASSPHRASE),
+    0,
+  );
+  console.info(`Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`);
+  keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
 }
 
 // Initialize the Stellar signer from private key (optional)
@@ -480,13 +490,8 @@ if (hederaSigner) {
     HEDERA_NETWORK as Network,
     new ExactHederaScheme(hederaSigner),
   );
-if (process.env.KEETA_FACILITATOR_PASSPHRASE) {
-  const keetaAccount = KeetaNet.lib.Account.fromSeed(
-    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_FACILITATOR_PASSPHRASE),
-    0,
-  );
-  console.info(`Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`);
-  const keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
+}
+if (keetaSigner) {
   facilitator.register(KEETA_NETWORK as Network, new ExactKeetaScheme(keetaSigner, console));
 }
 if (stellarSigner) {
@@ -853,10 +858,12 @@ app.listen(parseInt(PORT), () => {
 ║  AVM Network:  ${AVM_NETWORK}                          ║
 ║  Aptos Network: ${APTOS_NETWORK}                       ║
 ║  Hedera Network: ${HEDERA_NETWORK}                     ║
+║  Keeta Network: ${KEETA_NETWORK}                       ║
 ║  EVM Address:  ${evmAccount.address}                   ║
 ║  AVM Address:  ${avmSigner ? avmSigner.getAddresses()[0] : "(not configured)"}
 ║  Aptos Address: ${aptosAccount ? aptosAccount.accountAddress.toStringLong().slice(0, 20) + "..." : "(not configured)"}
 ║  Hedera Address: ${process.env.HEDERA_ACCOUNT_ID || "(not configured)"} ║
+║  Keeta Address: ${keetaSigner?.getAddresses()[0] || "(not configured)"} ║
 ║  Stellar Address: ${stellarSigner ? stellarSigner.address : "(not configured)"} ║
 ║  Extensions:   bazaar                                  ║
 ║                                                        ║

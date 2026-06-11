@@ -118,6 +118,7 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
       nodeUrl: process.env.HEDERA_NODE_URL || undefined,
     },
   );
+}
 
 // Initialize Keeta signer if passphrase is provided
 let keetaSigner: ReturnType<typeof toClientKeetaSigner> | undefined;
@@ -175,6 +176,7 @@ if (aptosAccount) {
 }
 if (hederaClientSigner) {
   client.register("hedera:*", new ExactHederaScheme(hederaClientSigner));
+}
 if (keetaSigner) {
   client.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner));
 }

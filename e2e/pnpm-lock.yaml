@@ -2393,6 +2393,9 @@ importers:
       '@x402/hedera':
         specifier: workspace:*
         version: link:../../../typescript/packages/mechanisms/hedera
+      '@x402/keeta':
+        specifier: workspace:*
+        version: link:../../../typescript/packages/mechanisms/keeta
       '@x402/stellar':
         specifier: workspace:*
         version: link:../../../typescript/packages/mechanisms/stellar
@@ -2472,6 +2475,9 @@ importers:
       '@x402/hono':
         specifier: workspace:*
         version: link:../../../typescript/packages/http/hono
+      '@x402/keeta':
+        specifier: workspace:*
+        version: link:../../../typescript/packages/mechanisms/keeta
       '@x402/stellar':
         specifier: workspace:*
         version: link:../../../typescript/packages/mechanisms/stellar
@@ -2615,6 +2621,9 @@ importers:
       '@x402/hedera':
         specifier: workspace:*
         version: link:../../../typescript/packages/mechanisms/hedera
+      '@x402/keeta':
+        specifier: workspace:*
+        version: link:../../../typescript/packages/mechanisms/keeta
       '@x402/next':
         specifier: workspace:*
         version: link:../../../typescript/packages/http/next
