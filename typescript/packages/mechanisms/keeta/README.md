@@ -74,13 +74,21 @@ const account = KeetaNet.lib.Account.fromSeed(
   0,
 );
 
-const signer = toClientKeetaSigner(account);
+// await using cleans up the signer when the code block ends.
+// For long-running processes call signer.destroy() on
+// SIGINT / SIGTERM to cleanup the signer and allow the NodeJS
+// process to terminate (see facilitator example below).
+await using signer = toClientKeetaSigner(account);
 
 const client = new x402Client();
 client.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(signer));
 ```
 
+Use either `await using` or call `await signer.destroy()` manually to clean up resources and allow the Node process to exit cleanly.
+
 ### Facilitator
+
+For long-running processes, call `signer.destroy()` on shutdown to clean up resources.
 
 ```typescript
 import * as KeetaNet from "@keetanetwork/keetanet-client";
@@ -96,8 +104,16 @@ const account = KeetaNet.lib.Account.fromSeed(
 const signer = toFacilitatorKeetaSigner([account]);
 
 const facilitator = new x402Facilitator();
-// Register Keeta faciliator with console logger
+// Register Keeta facilitator with console logger
 facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(signer, console));
+
+// Tear down signer on shutdown so the process exits cleanly.
+async function shutdown() {
+  await signer.destroy();
+  process.exit(0);
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 ```
 
 ### Server

@@ -37,12 +37,21 @@ function createMockSigner(
   signerAccount: InstanceType<typeof KeetaNet.lib.Account<KeyPairKeyAlgorithm>>,
   submitBlock: FacilitatorKeetaSigner["submitBlock"],
 ): FacilitatorKeetaSigner {
+  let client: KeetaNet.UserClient | undefined;
+  const destroy = () => {
+    if (client) return client.destroy();
+    return Promise.resolve();
+  };
+
   return {
     getAddresses: () => [FEE_PAYER_1, FEE_PAYER_2],
     getKeetaUserClient: (_feePayer: string, _network: Network) => {
-      return KeetaNet.UserClient.fromNetwork("test", signerAccount);
+      if (!client) client = KeetaNet.UserClient.fromNetwork("test", signerAccount);
+      return client;
     },
     submitBlock,
+    destroy,
+    [Symbol.asyncDispose]: () => destroy(),
   };
 }
 

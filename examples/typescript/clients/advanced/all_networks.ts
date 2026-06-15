@@ -119,12 +119,14 @@ async function main(): Promise<void> {
   }
 
   // Register Keeta scheme if passphrase is provided
-  if (keetaPassphrase) {
-    const keetaAccount = KeetaNet.lib.Account.fromSeed(
-      await KeetaNet.lib.Account.seedFromPassphrase(keetaPassphrase),
-      0,
-    );
-    const keetaSigner = toClientKeetaSigner(keetaAccount);
+  const keetaAccount = keetaPassphrase
+    ? KeetaNet.lib.Account.fromSeed(
+        await KeetaNet.lib.Account.seedFromPassphrase(keetaPassphrase),
+        0,
+      )
+    : null;
+  await using keetaSigner = keetaAccount ? toClientKeetaSigner(keetaAccount) : null;
+  if (keetaSigner && keetaAccount) {
     client.register("keeta:*", new ExactKeetaScheme(keetaSigner));
     console.log(`Initialized Keeta account: ${keetaAccount.publicKeyString.toString()}`);
   }

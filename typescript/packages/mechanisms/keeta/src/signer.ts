@@ -24,6 +24,12 @@ export type ClientKeetaSigner = {
     >,
     external?: string,
   ): Promise<InstanceType<typeof KeetaNet.lib.Block>>;
+
+  /**
+   * Close all open UserClient connections so the process can exit cleanly.
+   */
+  destroy(): Promise<void>;
+  [Symbol.asyncDispose](): Promise<void>;
 };
 
 /**
@@ -61,6 +67,14 @@ export function toClientKeetaSigner(
 
       return paymentBlock;
     },
+
+    destroy() {
+      return userClients.destroy();
+    },
+
+    [Symbol.asyncDispose]() {
+      return this.destroy();
+    },
   };
 }
 
@@ -93,6 +107,12 @@ export type FacilitatorKeetaSigner = {
    * @returns Promise resolving to the block hash
    */
   submitBlock(feePayer: string, encodedBlock: string, network: Network): Promise<string>;
+
+  /**
+   * Close all open UserClient connections so the process can exit cleanly.
+   */
+  destroy(): Promise<void>;
+  [Symbol.asyncDispose](): Promise<void>;
 };
 
 /**
@@ -153,6 +173,14 @@ export function toFacilitatorKeetaSigner(
       });
 
       return ret.voteStaple.blocksHash.toString();
+    },
+
+    destroy() {
+      return userClients.destroy();
+    },
+
+    [Symbol.asyncDispose]() {
+      return this.destroy();
     },
   };
 }

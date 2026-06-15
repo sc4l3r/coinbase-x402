@@ -69,6 +69,8 @@ describe("ExactKeetaFacilitator", () => {
     getAddresses: () => string[];
     getKeetaUserClient: ReturnType<typeof vi.fn>;
     submitBlock: ReturnType<typeof vi.fn>;
+    destroy: () => Promise<void>;
+    [Symbol.asyncDispose]: () => Promise<void>;
   };
 
   function createValidPayload(blockStr?: string): PaymentPayload {
@@ -165,6 +167,8 @@ describe("ExactKeetaFacilitator", () => {
       getAddresses: () => [FEE_PAYER_1],
       getKeetaUserClient: vi.fn().mockReturnValue({ client: mockKeetaClient }),
       submitBlock: vi.fn().mockResolvedValue("BLOCKHASH123"),
+      destroy: () => Promise.resolve(),
+      [Symbol.asyncDispose]: () => Promise.resolve(),
     };
     facilitator = new ExactKeetaScheme(mockSigner);
   });
@@ -189,6 +193,8 @@ describe("ExactKeetaFacilitator", () => {
         getAddresses: () => [FEE_PAYER_1, FEE_PAYER_2],
         getKeetaUserClient: vi.fn(),
         submitBlock: vi.fn(),
+        destroy: () => Promise.resolve(),
+        [Symbol.asyncDispose]: () => Promise.resolve(),
       };
       expect(new ExactKeetaScheme(multiSigner).getSigners(KEETA_TESTNET_CAIP2)).toEqual([
         FEE_PAYER_1,
@@ -755,6 +761,8 @@ describe("ExactKeetaFacilitator", () => {
         getAddresses: () => [FEE_PAYER_1, FEE_PAYER_2],
         getKeetaUserClient: vi.fn().mockReturnValue({ client: mockKeetaClient }),
         submitBlock: vi.fn().mockResolvedValue("HASH"),
+        destroy: () => Promise.resolve(),
+        [Symbol.asyncDispose]: () => Promise.resolve(),
       };
       const facilitator = new ExactKeetaScheme(multiSigner);
 
@@ -778,6 +786,8 @@ describe("ExactKeetaFacilitator", () => {
         getAddresses: () => [] as string[],
         getKeetaUserClient: vi.fn().mockReturnValue({ client: mockKeetaClient }),
         submitBlock: vi.fn(),
+        destroy: () => Promise.resolve(),
+        [Symbol.asyncDispose]: () => Promise.resolve(),
       };
       const facilitator = new ExactKeetaScheme(emptySigner);
 

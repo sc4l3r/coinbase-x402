@@ -13,6 +13,8 @@ function createMockSigner() {
     computePaymentBlock: vi.fn().mockResolvedValue({
       toBytes: vi.fn().mockReturnValue(MOCK_BLOCK_BYTES),
     }),
+    destroy: () => Promise.resolve(),
+    [Symbol.asyncDispose]: () => Promise.resolve(),
   };
 }
 

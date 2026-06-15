@@ -37,7 +37,7 @@ async function ensureAccountFunded(
   accountAddress: string,
   minBalance: bigint = 50000n,
 ): Promise<void> {
-  const tempClient = KeetaNet.UserClient.fromNetwork("test", null);
+  await using tempClient = KeetaNet.UserClient.fromNetwork("test", null);
   const initialBalance = await tempClient.client.getBalance(accountAddress, tempClient.baseToken);
 
   if (initialBalance >= minBalance) {

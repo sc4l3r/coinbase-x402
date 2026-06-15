@@ -32,7 +32,11 @@ import {
   toFacilitatorHederaSigner,
 } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/facilitator";
-import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import {
+  toFacilitatorKeetaSigner,
+  KEETA_TESTNET_CAIP2,
+  FacilitatorKeetaSigner,
+} from "@x402/keeta";
 import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
@@ -205,6 +209,7 @@ if (hederaAccountId && hederaPrivateKey) {
 }
 
 // Register Keeta scheme if passphrase is provided
+let keetaSigner: FacilitatorKeetaSigner | undefined;
 if (keetaPassphrase) {
   const keetaAccount = KeetaNet.lib.Account.fromSeed(
     await KeetaNet.lib.Account.seedFromPassphrase(keetaPassphrase),
@@ -214,8 +219,7 @@ if (keetaPassphrase) {
     `Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`,
   );
 
-  const keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
-
+  keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
   facilitator.register(
     KEETA_NETWORK,
     new ExactKeetaScheme(keetaSigner, console),
@@ -366,7 +370,7 @@ app.get("/health", (req, res) => {
 });
 
 // Start the server
-app.listen(parseInt(PORT), () => {
+let server = app.listen(parseInt(PORT), () => {
   console.log(
     `🚀 All Networks Facilitator listening on http://localhost:${PORT}`,
   );
@@ -378,3 +382,14 @@ app.listen(parseInt(PORT), () => {
   );
   console.log();
 });
+
+if (keetaSigner) {
+  const shutdown = async () => {
+    server.close(async () => {
+      await keetaSigner.destroy();
+      process.exit(0);
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}

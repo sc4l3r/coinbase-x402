@@ -38,7 +38,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 
 /**
- * Initialize and configure the x402 facilitator with EVM, SVM, AVM, Aptos, Stellar, and Hedera support
+ * Initialize and configure the x402 facilitator with EVM, SVM, AVM, Aptos, Stellar, Hedera, and Keeta support
  * This is called lazily on first use to support Next.js module loading
  *
  * @returns A configured x402Facilitator instance
@@ -179,6 +179,15 @@ async function createFacilitator(): Promise<x402Facilitator> {
 
     const keetaSigner = toFacilitatorKeetaSigner(keetaAccounts);
     facilitator.register(KEETA_TESTNET_CAIP2, new ExactKeetaScheme(keetaSigner, console));
+
+    // Tear down signer on shutdown so the process exits cleanly.
+    // createFacilitator() runs once as a lazy singleton, so these handlers only register once.
+    const destroyKeetaSigner = async () => {
+      await keetaSigner.destroy();
+      // We don't process.exit here to allow other cleanups to run as well.
+    };
+    process.once("SIGINT", destroyKeetaSigner);
+    process.once("SIGTERM", destroyKeetaSigner);
   }
 
   // Optionally register Stellar if configured

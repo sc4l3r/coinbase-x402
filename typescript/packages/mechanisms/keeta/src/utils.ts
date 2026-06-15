@@ -40,10 +40,13 @@ export async function getUsdcAddress(network: Network): Promise<string> {
 
   const client = KeetaNet.UserClient.fromNetwork(keetaNetwork, null);
 
-  const resolver = getDefaultResolver(client);
-  const usdc = await resolver.lookupToken("$USDC");
-
-  await client.destroy();
+  let usdc;
+  try {
+    const resolver = getDefaultResolver(client);
+    usdc = await resolver.lookupToken("$USDC");
+  } finally {
+    await client.destroy();
+  }
 
   if (!usdc) {
     throw new Error(`$USDC not found for network: ${network}`);
@@ -127,5 +130,13 @@ export class KeetaUserClientCache {
     this.cache.set(key, client);
 
     return client;
+  }
+
+  /**
+   * Destroy this instance and clean up all resources.
+   */
+  async destroy(): Promise<void> {
+    await Promise.all(Array.from(this.cache.values()).map(client => client.destroy()));
+    this.cache.clear();
   }
 }

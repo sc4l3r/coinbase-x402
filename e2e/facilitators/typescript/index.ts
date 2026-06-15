@@ -841,13 +841,14 @@ app.post("/close", (req, res) => {
   console.log("Received shutdown request");
 
   // Give time for response to be sent
-  setTimeout(() => {
+  setTimeout(async () => {
+    await keetaSigner?.destroy();
     process.exit(0);
   }, 100);
 });
 
 // Start the server
-app.listen(parseInt(PORT), () => {
+let server = app.listen(parseInt(PORT), () => {
   console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║           x402 TypeScript Facilitator                  ║
@@ -880,3 +881,14 @@ app.listen(parseInt(PORT), () => {
   // Log that facilitator is ready (needed for e2e test discovery)
   console.log("Facilitator listening");
 });
+
+if (keetaSigner) {
+  const shutdown = async () => {
+    server.close(async () => {
+      await keetaSigner.destroy();
+      process.exit(0);
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}
