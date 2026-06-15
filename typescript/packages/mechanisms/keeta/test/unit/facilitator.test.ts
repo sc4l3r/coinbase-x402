@@ -734,6 +734,22 @@ describe("ExactKeetaFacilitator", () => {
       expect(result.errorReason).toBe("transaction_failed");
     });
 
+    it("returns duplicate_block when the same block is settled while still pending", async () => {
+      // Keep the first settlement in flight so the block stays pending
+      mockSigner.submitBlock.mockImplementationOnce(() => new Promise<string>(() => {}));
+
+      const first = facilitator.settle(createValidPayload(), createValidRequirements());
+
+      // Let the first settlement register itself as pending before re-submitting
+      await new Promise(r => setTimeout(r, 50));
+
+      const duplicate = await facilitator.settle(createValidPayload(), createValidRequirements());
+
+      expect(duplicate.success).toBe(false);
+      expect(duplicate.errorReason).toBe("duplicate_block");
+      void first;
+    });
+
     it("selects a fee payer from multiple available addresses", async () => {
       const multiSigner = {
         getAddresses: () => [FEE_PAYER_1, FEE_PAYER_2],

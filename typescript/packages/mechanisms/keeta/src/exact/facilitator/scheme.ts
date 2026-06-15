@@ -10,7 +10,7 @@ import type {
 } from "@x402/core/types";
 import type { FacilitatorKeetaSigner } from "../../signer";
 import type { ExactKeetaPayload } from "../../types";
-import { SettlementQueue } from "./queue";
+import { DuplicateBlockError, SettlementQueue } from "./queue";
 
 /**
  * Keeta facilitator implementation for the Exact payment scheme.
@@ -210,9 +210,13 @@ export class ExactKeetaScheme implements SchemeNetworkFacilitator {
       };
     } catch (error) {
       this.logger?.error("Failed to settle transaction:", error);
+
+      const errorReason =
+        error instanceof DuplicateBlockError ? "duplicate_block" : "transaction_failed";
+
       return {
         success: false,
-        errorReason: "transaction_failed",
+        errorReason,
         transaction: "",
         network: payload.accepted.network,
         payer: valid.payer || "",

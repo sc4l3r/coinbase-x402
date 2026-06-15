@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
-import { SettlementQueue } from "../../src/exact/facilitator/queue";
+import { DuplicateBlockError, SettlementQueue } from "../../src/exact/facilitator/queue";
 import type { FacilitatorKeetaSigner } from "../../src/signer";
 import { KEETA_TESTNET_CAIP2 } from "../../src/constants";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
@@ -253,7 +253,7 @@ describe("Keeta SettlementQueue", () => {
       await new Promise(r => setTimeout(r, 50));
 
       await expect(queue.enqueue(FEE_PAYER_1, encodedBlockA, NETWORK)).rejects.toThrow(
-        "duplicate_block",
+        DuplicateBlockError,
       );
 
       resolveFirst();

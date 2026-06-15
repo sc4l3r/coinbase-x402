@@ -32,6 +32,19 @@ type RunnerEntry = {
 };
 
 /**
+ * Thrown when a block is submitted while an identical block is still in flight.
+ */
+export class DuplicateBlockError extends Error {
+  /**
+   * Creates a new DuplicateBlockError.
+   */
+  constructor() {
+    super("duplicate_block");
+    this.name = "DuplicateBlockError";
+  }
+}
+
+/**
  * Queue runner that processes settlement requests by submitting blocks to the Keeta network.
  */
 class SettlementQueueRunner extends KeetaAnchorQueueRunnerJSON<
@@ -140,7 +153,7 @@ export class SettlementQueue {
     ).hash.toString() as unknown as KeetaAnchorQueueRequestID;
 
     if (this.pendingPromises.has(blockId)) {
-      throw new Error("duplicate_block");
+      throw new DuplicateBlockError();
     }
 
     const runnerEntry = await this.getRunner(feePayer);
@@ -152,8 +165,16 @@ export class SettlementQueue {
       reject = rej;
     });
 
-    await runnerEntry.runner.add({ feePayer, encodedBlock, network }, { id: blockId });
+    // Add block to pending promises before enqueuing the job to ensure that a runner that's
+    // currently processing can immediately find this promise and doesn't think that
+    // the job is not pending anymore.
     this.pendingPromises.set(blockId, { resolve, reject });
+    try {
+      await runnerEntry.runner.add({ feePayer, encodedBlock, network }, { id: blockId });
+    } catch (error) {
+      this.pendingPromises.delete(blockId);
+      throw error;
+    }
 
     this.triggerDrain(runnerEntry);
 
