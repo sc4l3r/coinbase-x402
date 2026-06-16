@@ -629,6 +629,7 @@ async function runTest() {
   const serverAvmAddress = process.env.SERVER_AVM_ADDRESS;
   const serverAptosAddress = process.env.SERVER_APTOS_ADDRESS;
   const serverHederaAddress = process.env.SERVER_HEDERA_ADDRESS;
+  const serverKeetaAddress = process.env.SERVER_KEETA_ADDRESS;
   const serverStellarAddress = process.env.SERVER_STELLAR_ADDRESS;
   const serverTvmAddress = process.env.SERVER_TVM_ADDRESS;
   const clientEvmPrivateKey = process.env.CLIENT_EVM_PRIVATE_KEY;
@@ -637,6 +638,7 @@ async function runTest() {
   const clientAptosPrivateKey = process.env.CLIENT_APTOS_PRIVATE_KEY;
   const clientHederaAccountId = process.env.CLIENT_HEDERA_ACCOUNT_ID;
   const clientHederaPrivateKey = process.env.CLIENT_HEDERA_PRIVATE_KEY;
+  const clientKeetaMnemonic = process.env.CLIENT_KEETA_MNEMONIC;
   const clientStellarPrivateKey = process.env.CLIENT_STELLAR_PRIVATE_KEY;
   const clientTvmPrivateKey = process.env.CLIENT_TVM_PRIVATE_KEY;
   const facilitatorEvmPrivateKey = process.env.FACILITATOR_EVM_PRIVATE_KEY;
@@ -645,6 +647,7 @@ async function runTest() {
   const facilitatorAptosPrivateKey = process.env.FACILITATOR_APTOS_PRIVATE_KEY;
   const facilitatorHederaAccountId = process.env.FACILITATOR_HEDERA_ACCOUNT_ID;
   const facilitatorHederaPrivateKey = process.env.FACILITATOR_HEDERA_PRIVATE_KEY;
+  const facilitatorKeetaMnemonic = process.env.FACILITATOR_KEETA_MNEMONIC;
   const facilitatorStellarPrivateKey = process.env.FACILITATOR_STELLAR_PRIVATE_KEY;
   const facilitatorTvmPrivateKey = process.env.FACILITATOR_TVM_PRIVATE_KEY;
   const batchSettlementRecovery = envFlagDefaultTrue(process.env.BATCH_SETTLEMENT_RECOVERY);
@@ -728,6 +731,7 @@ async function runTest() {
   log(`   SVM: ${networks.svm.name} (${networks.svm.caip2})`);
   log(`   APTOS: ${networks.aptos.name} (${networks.aptos.caip2})`);
   log(`   HEDERA: ${networks.hedera.name} (${networks.hedera.caip2})`);
+  log(`   KEETA: ${networks.keeta.name} (${networks.keeta.caip2})`);
   log(`   STELLAR: ${networks.stellar.name} (${networks.stellar.caip2})`);
   log(`   TVM: ${networks.tvm.name} (${networks.tvm.caip2})`);
 
@@ -958,12 +962,14 @@ async function runTest() {
     'APTOS_PRIVATE_KEY',
     'HEDERA_ACCOUNT_ID',
     'HEDERA_PRIVATE_KEY',
+    'KEETA_FACILITATOR_MNEMONIC',
     'STELLAR_PRIVATE_KEY',
     'TVM_PRIVATE_KEY',
     'EVM_NETWORK',
     'SVM_NETWORK',
     'APTOS_NETWORK',
     'HEDERA_NETWORK',
+    'KEETA_NETWORK',
     'STELLAR_NETWORK',
     'TVM_NETWORK',
     'EVM_RPC_URL',
@@ -1119,6 +1125,7 @@ async function runTest() {
         EVM_NETWORK: networks.evm.caip2,
         SVM_NETWORK: networks.svm.caip2,
         APTOS_NETWORK: networks.aptos.caip2,
+        KEETA_NETWORK: networks.keeta.caip2,
         STELLAR_NETWORK: networks.stellar.caip2,
         TVM_NETWORK: networks.tvm.caip2,
       },
@@ -1184,6 +1191,7 @@ async function runTest() {
       aptosPrivateKey: clientAptosPrivateKey || '',
       hederaAccountId: clientHederaAccountId || '',
       hederaPrivateKey: clientHederaPrivateKey || '',
+      keetaClientMnemonic: clientKeetaMnemonic || '',
       stellarPrivateKey: clientStellarPrivateKey || '',
       tvmPrivateKey: clientTvmPrivateKey || '',
       serverUrl: `http://localhost:${port}`,
@@ -1194,6 +1202,7 @@ async function runTest() {
       svmRpcUrl: networks.svm.rpcUrl,
       hederaNetwork: networks.hedera.caip2,
       hederaNodeUrl: networks.hedera.rpcUrl,
+      keetaNetwork: networks.keeta.caip2,
       tvmNetwork: networks.tvm.caip2,
       tvmRpcUrl: networks.tvm.rpcUrl,
     };
@@ -1424,6 +1433,7 @@ async function runTest() {
     const facilitatorSupportsAvm = facilitatorConfig?.protocolFamilies?.includes('avm') ?? false;
     const facilitatorSupportsAptos = facilitatorConfig?.protocolFamilies?.includes('aptos') ?? false;
     const facilitatorSupportsHedera = facilitatorConfig?.protocolFamilies?.includes('hedera') ?? false;
+    const facilitatorSupportsKeeta = facilitatorConfig?.protocolFamilies?.includes('keeta') ?? false;
     const facilitatorSupportsStellar = facilitatorConfig?.protocolFamilies?.includes('stellar') ?? false;
     const facilitatorSupportsTvm = facilitatorConfig?.protocolFamilies?.includes('tvm') ?? false;
 
@@ -1441,6 +1451,7 @@ async function runTest() {
           : '',
       hederaAsset: process.env.HEDERA_ASSET,
       hederaAmount: process.env.HEDERA_AMOUNT,
+      keetaPayTo: facilitatorSupportsKeeta ? (serverKeetaAddress || '') : '',
       stellarPayTo: facilitatorSupportsStellar ? (serverStellarAddress || '') : '',
       tvmPayTo: facilitatorSupportsTvm ? (serverTvmAddress || '') : '',
       networks,

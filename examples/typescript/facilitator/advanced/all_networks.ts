@@ -8,6 +8,7 @@
  * (e.g., "eip155" before "solana" before "stellar").
  */
 
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { toFacilitatorAvmSigner } from "@x402/avm";
 import { ExactAvmScheme } from "@x402/avm/exact/facilitator";
 import { x402Facilitator } from "@x402/core/facilitator";
@@ -31,6 +32,12 @@ import {
   toFacilitatorHederaSigner,
 } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/facilitator";
+import {
+  toFacilitatorKeetaSigner,
+  KEETA_TESTNET_CAIP2,
+  FacilitatorKeetaSigner,
+} from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 import { toFacilitatorSvmSigner } from "@x402/svm";
 import { ExactSvmScheme } from "@x402/svm/exact/facilitator";
 import { base58 } from "@scure/base";
@@ -58,6 +65,7 @@ const PORT = process.env.PORT || "4022";
 // Configuration - optional per network (alphabetic order)
 const avmPrivateKey = process.env.AVM_PRIVATE_KEY as string | undefined;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}` | undefined;
+const keetaMnemonic = process.env.KEETA_MNEMONIC as string | undefined;
 const svmPrivateKey = process.env.SVM_PRIVATE_KEY as string | undefined;
 const stellarPrivateKey = process.env.STELLAR_PRIVATE_KEY as string | undefined;
 const tvmPrivateKey = process.env.TVM_PRIVATE_KEY as string | undefined;
@@ -69,13 +77,14 @@ const hederaPrivateKey = process.env.HEDERA_PRIVATE_KEY;
 if (
   !avmPrivateKey &&
   !evmPrivateKey &&
+  !keetaMnemonic &&
   !svmPrivateKey &&
   !stellarPrivateKey &&
   !tvmPrivateKey &&
   !(hederaAccountId && hederaPrivateKey)
 ) {
   console.error(
-    "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, TVM_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
+    "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_MNEMONIC, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, TVM_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
   );
   process.exit(1);
 }
@@ -84,6 +93,7 @@ if (
 const AVM_NETWORK = "algorand:SGO1GKSzyE7IEPItTxCByw9x8FmnrCDexi9/cOUJOiI="; // Algorand Testnet
 const EVM_NETWORK = "eip155:84532"; // Base Sepolia
 const HEDERA_NETWORK = "hedera:testnet"; // Hedera Testnet
+const KEETA_NETWORK = KEETA_TESTNET_CAIP2; // Keeta Testnet
 const SVM_NETWORK = "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1"; // Solana Devnet
 const STELLAR_NETWORK = "stellar:testnet"; // Stellar Testnet
 const TVM_NETWORK = (process.env.TVM_NETWORK || "tvm:-3") as Network; // TON Testnet
@@ -196,6 +206,24 @@ if (hederaAccountId && hederaPrivateKey) {
   });
   facilitator.register(HEDERA_NETWORK, new ExactHederaScheme(hederaSigner));
   console.info(`Hedera Facilitator account: ${hederaAccountId}`);
+}
+
+// Register Keeta scheme if mnemonic is provided
+let keetaSigner: FacilitatorKeetaSigner | undefined;
+if (keetaMnemonic) {
+  const keetaAccount = KeetaNet.lib.Account.fromSeed(
+    await KeetaNet.lib.Account.seedFromPassphrase(keetaMnemonic),
+    0,
+  );
+  console.info(
+    `Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`,
+  );
+
+  keetaSigner = toFacilitatorKeetaSigner([keetaAccount]);
+  facilitator.register(
+    KEETA_NETWORK,
+    new ExactKeetaScheme(keetaSigner, console),
+  );
 }
 
 // Register SVM scheme if private key is provided
@@ -342,7 +370,7 @@ app.get("/health", (req, res) => {
 });
 
 // Start the server
-app.listen(parseInt(PORT), () => {
+let server = app.listen(parseInt(PORT), () => {
   console.log(
     `🚀 All Networks Facilitator listening on http://localhost:${PORT}`,
   );
@@ -354,3 +382,14 @@ app.listen(parseInt(PORT), () => {
   );
   console.log();
 });
+
+if (keetaSigner) {
+  const shutdown = async () => {
+    server.close(async () => {
+      await keetaSigner.destroy();
+      process.exit(0);
+    });
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+}

@@ -15,6 +15,8 @@ import { ExactAvmScheme } from "@x402/avm/exact/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { UptoEvmScheme } from "@x402/evm/upto/client";
 import { ExactSvmScheme } from "@x402/svm/exact/client";
+import { toClientKeetaSigner } from "@x402/keeta";
+import { ExactKeetaScheme } from "@x402/keeta/exact/client";
 import { ExactStellarScheme } from "@x402/stellar/exact/client";
 import { ExactTvmScheme } from "@x402/tvm/exact/client";
 import { createEd25519Signer } from "@x402/stellar";
@@ -25,12 +27,14 @@ import { keyPairFromSeed, type KeyPair } from "@ton/crypto";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import { privateKeyToAccount } from "viem/accounts";
+import * as KeetaNet from "@keetanetwork/keetanet-client";
 
 config();
 
 // Configuration - optional per network
 const avmPrivateKey = process.env.AVM_PRIVATE_KEY as string | undefined;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}` | undefined;
+const keetaMnemonic = process.env.KEETA_MNEMONIC as string | undefined;
 const svmPrivateKey = process.env.SVM_PRIVATE_KEY as string | undefined;
 const stellarPrivateKey = process.env.STELLAR_PRIVATE_KEY as string | undefined;
 const hederaAccountId = process.env.HEDERA_ACCOUNT_ID;
@@ -73,13 +77,14 @@ async function main(): Promise<void> {
   if (
     !avmPrivateKey &&
     !evmPrivateKey &&
+    !keetaMnemonic &&
     !svmPrivateKey &&
     !stellarPrivateKey &&
     !(hederaAccountId && hederaPrivateKey) &&
     !tvmPrivateKey
   ) {
     console.error(
-      "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY, or TVM_PRIVATE_KEY is required",
+      "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_MNEMONIC, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY, or TVM_PRIVATE_KEY is required",
     );
     process.exit(1);
   }
@@ -111,6 +116,16 @@ async function main(): Promise<void> {
     );
     client.register("hedera:*", new ExactHederaScheme(hederaSigner));
     console.log(`Initialized Hedera account: ${hederaAccountId} on ${hederaNetwork}`);
+  }
+
+  // Register Keeta scheme if mnemonic is provided
+  const keetaAccount = keetaMnemonic
+    ? KeetaNet.lib.Account.fromSeed(await KeetaNet.lib.Account.seedFromPassphrase(keetaMnemonic), 0)
+    : null;
+  await using keetaSigner = keetaAccount ? toClientKeetaSigner(keetaAccount) : null;
+  if (keetaSigner && keetaAccount) {
+    client.register("keeta:*", new ExactKeetaScheme(keetaSigner));
+    console.log(`Initialized Keeta account: ${keetaAccount.publicKeyString.toString()}`);
   }
 
   // Register SVM scheme if private key is provided

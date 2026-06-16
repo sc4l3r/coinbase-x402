@@ -163,6 +163,13 @@
       "protocolFamily": "hedera"
     },
     {
+      "path": "/exact/keeta",
+      "method": "GET",
+      "description": "Protected endpoint requiring payment on Keeta network",
+      "requiresPayment": true,
+      "protocolFamily": "keeta"
+    },
+    {
       "path": "/exact/stellar",
       "method": "GET",
       "description": "Protected endpoint requiring payment on Stellar network",
@@ -195,6 +202,7 @@
       "AVM_PAYEE_ADDRESS",
       "APTOS_PAYEE_ADDRESS",
       "HEDERA_PAYEE_ADDRESS",
+      "KEETA_PAYEE_ADDRESS",
       "STELLAR_PAYEE_ADDRESS",
       "TVM_PAYEE_ADDRESS",
       "TVM_NETWORK",

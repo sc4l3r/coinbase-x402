@@ -1,6 +1,6 @@
 import type { NetworkSet } from './networks/networks';
 
-export type ProtocolFamily = 'evm' | 'svm' | 'avm' | 'aptos' | 'hedera' | 'stellar' | 'tvm';
+export type ProtocolFamily = 'evm' | 'svm' | 'avm' | 'aptos' | 'hedera' | 'keeta' | 'stellar' | 'tvm';
 export type Transport = 'http' | 'mcp';
 export type PaymentScheme = 'exact' | 'upto' | 'batch-settlement';
 export type AssetTransferMethod = 'eip3009' | 'permit2';
@@ -80,6 +80,7 @@ export interface ClientConfig {
   aptosPrivateKey: string;
   hederaAccountId: string;
   hederaPrivateKey: string;
+  keetaClientMnemonic: string;
   stellarPrivateKey: string;
   tvmPrivateKey: string;
   serverUrl: string;
@@ -90,6 +91,7 @@ export interface ClientConfig {
   svmRpcUrl: string;
   hederaNetwork: string;
   hederaNodeUrl: string;
+  keetaNetwork: string;
   tvmNetwork: string;
   tvmRpcUrl: string;
   batchSettlement?: BatchSettlementClientConfig;
@@ -104,6 +106,7 @@ export interface ServerConfig {
   hederaPayTo: string;
   hederaAsset?: string;
   hederaAmount?: string;
+  keetaPayTo: string;
   stellarPayTo: string;
   tvmPayTo: string;
   networks: NetworkSet;

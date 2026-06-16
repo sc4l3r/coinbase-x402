@@ -8,6 +8,7 @@
     "avm",
     "aptos",
     "hedera",
+    "keeta",
     "stellar",
     "tvm"
   ],
@@ -42,6 +43,7 @@
       "APTOS_PRIVATE_KEY",
       "HEDERA_ACCOUNT_ID",
       "HEDERA_PRIVATE_KEY",
+      "KEETA_FACILITATOR_MNEMONIC",
       "STELLAR_PRIVATE_KEY",
       "TVM_PRIVATE_KEY",
       "EVM_NETWORK",

@@ -38,6 +38,9 @@ There are pre-configured [examples available in the x402 repo](https://github.co
 
     # For Stellar support, also add:
     npm install @x402/stellar
+
+    # For Keeta support, also add:
+    npm install @x402/keeta
     ```
   </Tab>
   <Tab title="Go">
@@ -164,6 +167,22 @@ const stellarSigner = createEd25519Signer(
   process.env.STELLAR_PRIVATE_KEY!,
   "stellar:testnet"
 );
+```
+
+#### Keeta
+
+Use the Keeta SDK to instantiate a signer:
+
+```typescript
+import * as KeetaNet from "@keetanetwork/keetanet-client";
+import { toClientKeetaSigner } from "@x402/keeta";
+
+// Derive account from mnemonic
+const account = KeetaNet.lib.Account.fromSeed(
+  await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_MNEMONIC!),
+  0,
+);
+const keetaSigner = toClientKeetaSigner(account);
 ```
 
 ### 3. Make Paid Requests Automatically
@@ -439,6 +458,16 @@ You can register multiple payment schemes to handle different networks:
       "stellar:testnet"
     );
     client.register("stellar:*", new ExactStellarScheme(stellarSigner));
+
+    // For Keeta support, also add:
+    import * as KeetaNet from "@keetanetwork/keetanet-client";
+    import { ExactKeetaScheme, toClientKeetaSigner } from "@x402/keeta";
+
+    const keetaAccount = KeetaNet.lib.Account.fromSeed(
+      await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_MNEMONIC!),
+      0,
+    );
+    client.register("keeta:*", new ExactKeetaScheme(toClientKeetaSigner(keetaAccount)));
     ```
   </Tab>
   <Tab title="Go">
@@ -565,7 +594,7 @@ try {
 
 ### Summary
 
-* Install x402 client packages (`@x402/fetch` or `@x402/axios`) and mechanism packages (`@x402/evm`, `@x402/svm`, `@x402/aptos`)
+* Install x402 client packages (`@x402/fetch` or `@x402/axios`) and mechanism packages (`@x402/evm`, `@x402/svm`, `@x402/aptos`, `@x402/keeta`)
 * Create a wallet signer
 * Create an `x402Client` and register payment schemes (`exact` for fixed-price, `upto` for usage-based billing, `batch-settlement` for batched EVM micropayments when the server advertises it)
 * Use the provided wrapper/interceptor to make paid API requests
