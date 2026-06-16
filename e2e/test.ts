@@ -638,7 +638,7 @@ async function runTest() {
   const clientAptosPrivateKey = process.env.CLIENT_APTOS_PRIVATE_KEY;
   const clientHederaAccountId = process.env.CLIENT_HEDERA_ACCOUNT_ID;
   const clientHederaPrivateKey = process.env.CLIENT_HEDERA_PRIVATE_KEY;
-  const clientKeetaPassphrase = process.env.CLIENT_KEETA_PASSPHRASE;
+  const clientKeetaMnemonic = process.env.CLIENT_KEETA_MNEMONIC;
   const clientStellarPrivateKey = process.env.CLIENT_STELLAR_PRIVATE_KEY;
   const clientTvmPrivateKey = process.env.CLIENT_TVM_PRIVATE_KEY;
   const facilitatorEvmPrivateKey = process.env.FACILITATOR_EVM_PRIVATE_KEY;
@@ -647,7 +647,7 @@ async function runTest() {
   const facilitatorAptosPrivateKey = process.env.FACILITATOR_APTOS_PRIVATE_KEY;
   const facilitatorHederaAccountId = process.env.FACILITATOR_HEDERA_ACCOUNT_ID;
   const facilitatorHederaPrivateKey = process.env.FACILITATOR_HEDERA_PRIVATE_KEY;
-  const facilitatorKeetaPassphrase = process.env.FACILITATOR_KEETA_PASSPHRASE;
+  const facilitatorKeetaMnemonic = process.env.FACILITATOR_KEETA_MNEMONIC;
   const facilitatorStellarPrivateKey = process.env.FACILITATOR_STELLAR_PRIVATE_KEY;
   const facilitatorTvmPrivateKey = process.env.FACILITATOR_TVM_PRIVATE_KEY;
   const batchSettlementRecovery = envFlagDefaultTrue(process.env.BATCH_SETTLEMENT_RECOVERY);
@@ -962,7 +962,7 @@ async function runTest() {
     'APTOS_PRIVATE_KEY',
     'HEDERA_ACCOUNT_ID',
     'HEDERA_PRIVATE_KEY',
-    'KEETA_FACILITATOR_PASSPHRASE',
+    'KEETA_FACILITATOR_MNEMONIC',
     'STELLAR_PRIVATE_KEY',
     'TVM_PRIVATE_KEY',
     'EVM_NETWORK',
@@ -1191,7 +1191,7 @@ async function runTest() {
       aptosPrivateKey: clientAptosPrivateKey || '',
       hederaAccountId: clientHederaAccountId || '',
       hederaPrivateKey: clientHederaPrivateKey || '',
-      keetaClientPassphrase: clientKeetaPassphrase || '',
+      keetaClientMnemonic: clientKeetaMnemonic || '',
       stellarPrivateKey: clientStellarPrivateKey || '',
       tvmPrivateKey: clientTvmPrivateKey || '',
       serverUrl: `http://localhost:${port}`,

@@ -165,13 +165,13 @@ async function createFacilitator(): Promise<x402Facilitator> {
   }
 
   // Optionally register Keeta if configured
-  if (process.env.FACILITATOR_KEETA_PASSPHRASE) {
+  if (process.env.FACILITATOR_KEETA_MNEMONIC) {
     const amountSigners = parseInt(process.env.FACILITATOR_KEETA_SIGNER_AMOUNT ?? "1");
     const keetaAccounts = [];
 
     for (let i = 0; i < amountSigners; i++) {
       const account = KeetaNet.lib.Account.fromSeed(
-        await KeetaNet.lib.Account.seedFromPassphrase(process.env.FACILITATOR_KEETA_PASSPHRASE),
+        await KeetaNet.lib.Account.seedFromPassphrase(process.env.FACILITATOR_KEETA_MNEMONIC),
         i,
       );
       keetaAccounts.push(account);

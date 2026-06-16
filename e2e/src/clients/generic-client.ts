@@ -25,7 +25,7 @@ export class GenericClientProxy extends BaseProxy implements ClientProxy {
         APTOS_PRIVATE_KEY: config.aptosPrivateKey,
         HEDERA_ACCOUNT_ID: config.hederaAccountId,
         HEDERA_PRIVATE_KEY: config.hederaPrivateKey,
-        KEETA_CLIENT_PASSPHRASE: config.keetaClientPassphrase,
+        KEETA_CLIENT_MNEMONIC: config.keetaClientMnemonic,
         STELLAR_PRIVATE_KEY: config.stellarPrivateKey,
         TVM_PRIVATE_KEY: config.tvmPrivateKey,
         RESOURCE_SERVER_URL: config.serverUrl,

@@ -65,7 +65,7 @@ const PORT = process.env.PORT || "4022";
 // Configuration - optional per network (alphabetic order)
 const avmPrivateKey = process.env.AVM_PRIVATE_KEY as string | undefined;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}` | undefined;
-const keetaPassphrase = process.env.KEETA_PASSPHRASE as string | undefined;
+const keetaMnemonic = process.env.KEETA_MNEMONIC as string | undefined;
 const svmPrivateKey = process.env.SVM_PRIVATE_KEY as string | undefined;
 const stellarPrivateKey = process.env.STELLAR_PRIVATE_KEY as string | undefined;
 const tvmPrivateKey = process.env.TVM_PRIVATE_KEY as string | undefined;
@@ -77,14 +77,14 @@ const hederaPrivateKey = process.env.HEDERA_PRIVATE_KEY;
 if (
   !avmPrivateKey &&
   !evmPrivateKey &&
-  !keetaPassphrase &&
+  !keetaMnemonic &&
   !svmPrivateKey &&
   !stellarPrivateKey &&
   !tvmPrivateKey &&
   !(hederaAccountId && hederaPrivateKey)
 ) {
   console.error(
-    "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_PASSPHRASE, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, TVM_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
+    "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_MNEMONIC, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, TVM_PRIVATE_KEY, or HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY is required",
   );
   process.exit(1);
 }
@@ -208,11 +208,11 @@ if (hederaAccountId && hederaPrivateKey) {
   console.info(`Hedera Facilitator account: ${hederaAccountId}`);
 }
 
-// Register Keeta scheme if passphrase is provided
+// Register Keeta scheme if mnemonic is provided
 let keetaSigner: FacilitatorKeetaSigner | undefined;
-if (keetaPassphrase) {
+if (keetaMnemonic) {
   const keetaAccount = KeetaNet.lib.Account.fromSeed(
-    await KeetaNet.lib.Account.seedFromPassphrase(keetaPassphrase),
+    await KeetaNet.lib.Account.seedFromPassphrase(keetaMnemonic),
     0,
   );
   console.info(

@@ -19,7 +19,7 @@ import { Account, Ed25519PrivateKey, PrivateKey, PrivateKeyVariants } from "@apt
 import { createClientHederaSigner, PrivateKey as HederaPrivateKey } from "@x402/hedera";
 import { ExactHederaScheme } from "@x402/hedera/exact/client";
 import { ExactKeetaScheme } from "@x402/keeta/exact/client";
-import { toClientKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
+import { toClientKeetaSigner, KEETA_TESTNET_CAIP2, ClientKeetaSigner } from "@x402/keeta";
 import { ExactStellarScheme } from "@x402/stellar/exact/client";
 import { createEd25519Signer, type Ed25519Signer } from "@x402/stellar";
 import { ExactTvmScheme } from "@x402/tvm/exact/client";
@@ -121,11 +121,11 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
   );
 }
 
-// Initialize Keeta signer if passphrase is provided
-let keetaSigner: ReturnType<typeof toClientKeetaSigner> | undefined;
-if (process.env.KEETA_CLIENT_PASSPHRASE) {
+// Initialize Keeta signer if mnemonic is provided
+let keetaSigner: ClientKeetaSigner | undefined;
+if (process.env.KEETA_CLIENT_MNEMONIC) {
   const keetaAccount = KeetaNet.lib.Account.fromSeed(
-    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_CLIENT_PASSPHRASE),
+    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_CLIENT_MNEMONIC),
     0,
   );
   keetaSigner = toClientKeetaSigner(keetaAccount);

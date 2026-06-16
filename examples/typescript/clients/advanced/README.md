@@ -44,7 +44,7 @@ and fill required environment variables:
 - `HEDERA_ACCOUNT_ID` - Hedera account id for Hedera payments (optional)
 - `HEDERA_PRIVATE_KEY` - Hedera **ECDSA** private key (0x-prefixed or DER-encoded) for Hedera payments (optional)
 - `HEDERA_NETWORK` - Hedera network (optional, defaults to `hedera:testnet`)
-- `KEETA_PASSPHRASE` - Keeta passphrase for Keeta payments
+- `KEETA_MNEMONIC` - Keeta mnemonic for Keeta payments
 
 2. Install and build all packages from the typescript examples root:
 
@@ -74,7 +74,7 @@ Stellar accounts need to be created and funded with both XLM and USDC. Instructi
 
 To create a Keeta Testnet wallet:
 
-1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Make sure to save your passphrase to keep access to your wallet. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
+1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Make sure to save your mnemonic (seed phrase) to keep access to your wallet. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
 2. Use the [Keeta Testnet Faucet](https://faucet.test.keeta.com/) to send Testnet KTA to your wallet.
 3. To get Testnet USDC on Keeta, go to the "Receive" page in the wallet, click on "Any token from Keeta Testnet", select "USDC from Base (Sepolia) Testnet" and copy the deposit address (starting with `0x`). Then go the [Circle Faucet](https://faucet.circle.com/), select Base network and enter your Base deposit address.
 

@@ -80,7 +80,7 @@ export interface ClientConfig {
   aptosPrivateKey: string;
   hederaAccountId: string;
   hederaPrivateKey: string;
-  keetaClientPassphrase: string;
+  keetaClientMnemonic: string;
   stellarPrivateKey: string;
   tvmPrivateKey: string;
   serverUrl: string;

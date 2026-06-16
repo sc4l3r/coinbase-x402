@@ -225,9 +225,9 @@ if (process.env.HEDERA_ACCOUNT_ID && process.env.HEDERA_PRIVATE_KEY) {
 }
 
 let keetaSigner: FacilitatorKeetaSigner | undefined;
-if (process.env.KEETA_FACILITATOR_PASSPHRASE) {
+if (process.env.KEETA_FACILITATOR_MNEMONIC) {
   const keetaAccount = KeetaNet.lib.Account.fromSeed(
-    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_FACILITATOR_PASSPHRASE),
+    await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_FACILITATOR_MNEMONIC),
     0,
   );
   console.info(`Keeta Facilitator account: ${keetaAccount.publicKeyString.toString()}`);
@@ -823,7 +823,7 @@ app.get("/health", (req, res) => {
     avmNetwork: avmSigner ? AVM_NETWORK : "(not configured)",
     aptosNetwork: aptosAccount ? APTOS_NETWORK : "(not configured)",
     hederaNetwork: hederaSigner ? HEDERA_NETWORK : "(not configured)",
-    keetaNetwork: process.env.KEETA_FACILITATOR_PASSPHRASE ? KEETA_NETWORK : "(not configured)",
+    keetaNetwork: process.env.KEETA_FACILITATOR_MNEMONIC ? KEETA_NETWORK : "(not configured)",
     stellarNetwork: stellarSigner ? STELLAR_NETWORK : "(not configured)",
     facilitator: "typescript",
     version: "2.0.0",

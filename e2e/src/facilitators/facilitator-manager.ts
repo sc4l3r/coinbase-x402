@@ -39,7 +39,7 @@ export class FacilitatorManager {
       aptosPrivateKey: process.env.FACILITATOR_APTOS_PRIVATE_KEY,
       hederaAccountId: process.env.FACILITATOR_HEDERA_ACCOUNT_ID,
       hederaPrivateKey: process.env.FACILITATOR_HEDERA_PRIVATE_KEY,
-      keetaFacilitatorPassphrase: process.env.FACILITATOR_KEETA_PASSPHRASE,
+      keetaFacilitatorMnemonic: process.env.FACILITATOR_KEETA_MNEMONIC,
       stellarPrivateKey: process.env.FACILITATOR_STELLAR_PRIVATE_KEY,
       tvmPrivateKey: process.env.FACILITATOR_TVM_PRIVATE_KEY,
       networks,

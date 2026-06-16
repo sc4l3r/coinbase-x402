@@ -70,7 +70,7 @@ import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { ExactKeetaScheme, toClientKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
 
 const account = KeetaNet.lib.Account.fromSeed(
-  await KeetaNet.lib.Account.seedFromPassphrase(process.env.CLIENT_PASSPHRASE),
+  await KeetaNet.lib.Account.seedFromPassphrase(process.env.CLIENT_MNEMONIC),
   0,
 );
 
@@ -97,7 +97,7 @@ import { toFacilitatorKeetaSigner, KEETA_TESTNET_CAIP2 } from "@x402/keeta";
 import { ExactKeetaScheme } from "@x402/keeta/exact/facilitator";
 
 const account = KeetaNet.lib.Account.fromSeed(
-  await KeetaNet.lib.Account.seedFromPassphrase(process.env.FACILITATOR_PASSPHRASE),
+  await KeetaNet.lib.Account.seedFromPassphrase(process.env.FACILITATOR_MNEMONIC),
   0,
 );
 
@@ -148,7 +148,7 @@ Supports any Keeta token:
 
 For testing on Keeta Testnet:
 
-1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Save your passphrase to keep access. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
+1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Save your mnemonic (seed phrase) to keep access. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
 2. Use the [Keeta Testnet Faucet](https://faucet.test.keeta.com/) to send Testnet KTA to your wallet.
 3. To get Testnet USDC on Keeta, go to the "Receive" page in the wallet, click on "Any token from Keeta Testnet", select "USDC from Base (Sepolia) Testnet" and copy the deposit address (starting with `0x`). Then go to the [Circle Faucet](https://faucet.circle.com/), select Base network and enter your Base deposit address.
 
@@ -158,12 +158,12 @@ The integration tests generate and fund new Keeta accounts by default, so no con
 If desired, the client, server, and facilitator used for the tests can be specified via the following environment variables:
 
 ```bash
-# Client's BIP-39 passphrase
-KEETA_CLIENT_PASSPHRASE="..."
+# Client's BIP-39 mnemonic
+KEETA_CLIENT_MNEMONIC="..."
 # Server's Keeta address
 KEETA_SERVER_ADDRESS="keeta_..."
-# Facilitator's BIP-39 passphrase
-KEETA_FACILITATOR_PASSPHRASE="..."
+# Facilitator's BIP-39 mnemonic
+KEETA_FACILITATOR_MNEMONIC="..."
 ```
 
 ## Development

@@ -25,9 +25,9 @@ import type { ExactKeetaPayload } from "../../src/types";
 import { KEETA_MAINNET_CAIP2, KEETA_TESTNET_CAIP2 } from "../../src/constants";
 import { getUsdcAddress, KTA_TESTNET_ADDRESS } from "../../src/utils";
 
-// Load passphrases from environment (all optional, ephemeral accounts are generated if absent)
-const CLIENT_PASSPHRASE = process.env.KEETA_CLIENT_PASSPHRASE;
-const FACILITATOR_PASSPHRASE = process.env.KEETA_FACILITATOR_PASSPHRASE;
+// Load mnemonics from environment (all optional, ephemeral accounts are generated if absent)
+const CLIENT_MNEMONIC = process.env.KEETA_CLIENT_MNEMONIC;
+const FACILITATOR_MNEMONIC = process.env.KEETA_FACILITATOR_MNEMONIC;
 const SERVER_ADDRESS = process.env.KEETA_SERVER_ADDRESS;
 
 // Amount: 0.000001 KTA in atomic units (Testnet KTA has 9 decimals)
@@ -147,18 +147,18 @@ describe("Keeta Integration Tests", () => {
   let usdcMainnetAddress: string;
 
   beforeAll(async () => {
-    // Create client account: use passphrase if provided, otherwise generate a fresh ephemeral account
+    // Create client account: use mnemonic if provided, otherwise generate a fresh ephemeral account
     clientAccount = KeetaNet.lib.Account.fromSeed(
-      CLIENT_PASSPHRASE
-        ? await KeetaNet.lib.Account.seedFromPassphrase(CLIENT_PASSPHRASE)
+      CLIENT_MNEMONIC
+        ? await KeetaNet.lib.Account.seedFromPassphrase(CLIENT_MNEMONIC)
         : KeetaNet.lib.Account.generateRandomSeed({ asString: true }),
       0,
     );
 
-    // Create facilitator account: use passphrase if provided, otherwise generate a fresh ephemeral account
+    // Create facilitator account: use mnemonic if provided, otherwise generate a fresh ephemeral account
     facilitatorAccount = KeetaNet.lib.Account.fromSeed(
-      FACILITATOR_PASSPHRASE
-        ? await KeetaNet.lib.Account.seedFromPassphrase(FACILITATOR_PASSPHRASE)
+      FACILITATOR_MNEMONIC
+        ? await KeetaNet.lib.Account.seedFromPassphrase(FACILITATOR_MNEMONIC)
         : KeetaNet.lib.Account.generateRandomSeed({ asString: true }),
       0,
     );

@@ -120,7 +120,7 @@ CLIENT_SVM_PRIVATE_KEY=...          # Solana private key for client payments
 CLIENT_APTOS_PRIVATE_KEY=...        # Aptos private key for client payments (hex string)
 CLIENT_HEDERA_ACCOUNT_ID=0.0....    # Hedera account id for client payments
 CLIENT_HEDERA_PRIVATE_KEY=0x...     # Hedera ECDSA private key for client payments
-CLIENT_KEETA_PASSPHRASE=...         # Keeta passphrase for client payments
+CLIENT_KEETA_MNEMONIC=...           # Keeta mnemonic for client payments
 CLIENT_STELLAR_PRIVATE_KEY=...      # Stellar private key for client payments
 CLIENT_TVM_PRIVATE_KEY=...          # TVM private key for client payments
 
@@ -139,7 +139,7 @@ FACILITATOR_SVM_PRIVATE_KEY=...     # Solana private key for facilitator
 FACILITATOR_APTOS_PRIVATE_KEY=...   # Aptos private key for facilitator (hex string)
 FACILITATOR_HEDERA_ACCOUNT_ID=0.0... # Hedera fee payer account id for facilitator
 FACILITATOR_HEDERA_PRIVATE_KEY=0x... # Hedera ECDSA private key for facilitator
-FACILITATOR_KEETA_PASSPHRASE=...    # Keeta passphrase for facilitator
+FACILITATOR_KEETA_MNEMONIC=...      # Keeta mnemonic for facilitator
 FACILITATOR_STELLAR_PRIVATE_KEY=... # Stellar private key for facilitator
 FACILITATOR_TVM_PRIVATE_KEY=...     # TVM private key for facilitator
 
@@ -189,7 +189,7 @@ You need **three separate Stellar accounts** for e2e tests (client, server, faci
 
 You need **three separate Keeta accounts** for e2e tests (client, server, facilitator):
 
-1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Make sure to save your passphrase to keep access to your wallet. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
+1. Go to [Keeta Testnet Wallet](https://wallet.test.keeta.com/) and follow the steps to create your wallet. Make sure to save your mnemonic (seed phrase) to keep access to your wallet. To get your Keeta address, click on "Receive" and copy the deposit address (starting with `keeta_`).
 2. Use the [Keeta Testnet Faucet](https://faucet.test.keeta.com/) to send Testnet KTA to your wallet.
 3. To get Testnet USDC on Keeta, go to the "Receive" page in the wallet, click on "Any token from Keeta Testnet", select "USDC from Base (Sepolia) Testnet" and copy the deposit address (starting with `0x`). Then go the [Circle Faucet](https://faucet.circle.com/), select Base network and enter your Base deposit address.
 

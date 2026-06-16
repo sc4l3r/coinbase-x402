@@ -177,9 +177,9 @@ Use the Keeta SDK to instantiate a signer:
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { toClientKeetaSigner } from "@x402/keeta";
 
-// Derive account from passphrase
+// Derive account from mnemonic
 const account = KeetaNet.lib.Account.fromSeed(
-  await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_PASSPHRASE!),
+  await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_MNEMONIC!),
   0,
 );
 const keetaSigner = toClientKeetaSigner(account);
@@ -464,7 +464,7 @@ You can register multiple payment schemes to handle different networks:
     import { ExactKeetaScheme, toClientKeetaSigner } from "@x402/keeta";
 
     const keetaAccount = KeetaNet.lib.Account.fromSeed(
-      await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_PASSPHRASE!),
+      await KeetaNet.lib.Account.seedFromPassphrase(process.env.KEETA_MNEMONIC!),
       0,
     );
     client.register("keeta:*", new ExactKeetaScheme(toClientKeetaSigner(keetaAccount)));
